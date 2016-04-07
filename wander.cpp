@@ -23,6 +23,10 @@ Adept MobileRobots for information about a commercial version of ARIA at
 robots@mobilerobots.com or 
 Adept MobileRobots, 10 Columbia Drive, Amherst, NH 03031; +1-603-881-7960
 */
+#include <iostream>
+#include <unistd.h>
+#include <cmath>
+#include <chrono>
 #include "Aria.h"
 
 
@@ -94,9 +98,14 @@ int main(int argc, char **argv)
   // turn on the motors, turn off amigobot sounds
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
+  
+  robot.lock();
+  robot.setVel2(200, 150);
+  robot.unlock();
+  //*/
 
   // add a set of actions that combine together to effect the wander behavior
-  ArActionStallRecover recover;
+  /*ArActionStallRecover recover;
   ArActionBumpers bumpers;
   ArActionAvoidFront avoidFrontNear("Avoid Front Near", 225, 0);
   ArActionAvoidFront avoidFrontFar;
@@ -105,7 +114,65 @@ int main(int argc, char **argv)
   robot.addAction(&bumpers, 75);
   robot.addAction(&avoidFrontNear, 50);
   robot.addAction(&avoidFrontFar, 49);
-  robot.addAction(&constantVelocity, 25);
+  robot.addAction(&constantVelocity, 25);//*/
+  
+  robot.requestEncoderPackets();
+  
+  double x1 = 0;
+  double y1 = 0;
+  double phi1 = 0;
+  double dt = 0.001;
+  
+  double rx, ry, rphi;
+  double x2, y2, phi2;
+  
+  std::chrono::high_resolution_clock::time_point t1; 
+  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+  
+  while (1) {
+    robot.lock();
+    long L = robot.getLeftEncoder();
+    long R = robot.getRightEncoder();
+    double V = robot.getVel();
+    double RV = robot.getRightVel();
+    double LV = robot.getLeftVel();
+    double RTV = robot.getRotVel() * 3.141592654 / 180.0;
+    rx = robot.getX();
+    ry = robot.getY();
+    //*/
+    robot.unlock();
+    
+    t1 = t2;
+    t2 = std::chrono::high_resolution_clock::now();
+    long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    dt = (double)microseconds / 1000000.0;
+    
+    x2 = x1 + dt*V*cos(phi1);
+    y2 = y1 + dt*V*sin(phi1);
+    phi2 = phi1 + dt*RTV;
+    //*/
+    
+    if (phi2 > 2*3.141592654) phi2 -= (3.141592654*2);
+    if (phi2 < 0.0) phi2 += (3.141592654*2);
+    
+    x1 = x2;
+    y1 = y2;
+    phi1 = phi2;
+    
+    
+    
+    std::cout << x1 << ", ";
+    std::cout << rx << ", ";
+    std::cout << y1 << ", ";
+    std::cout << ry << ", ";
+    std::cout << phi1*180.0/3.141592654 << ", ";
+    std::cout << (x1 - rx) << ", ";
+    std::cout << (y1 - ry) << ", ";
+    std::cout << std::endl;
+    //std::cout << RTV << std::endl;
+    //std::cout << L << ", " << R << ", " << V << ", " << LV << ", " << RV << std::endl;
+    usleep(1000);
+  }
   
   // wait for robot task loop to end before exiting the program
   robot.waitForRunExit();
