@@ -2,11 +2,13 @@
 Project for Introduction to Sensing and Estimation in Robotics
 
 To Compile:
-make clean
-make
+    make
+    
+To Clean:
+    make clean
 
 To Run:
-sudo ./wander -rp /dev/ttyUSB0 -lp /dev/ttyUSB1
+    sudo ./build/wander -rp /dev/ttyUSB0 -lp /dev/ttyUSB1
 
 
 
