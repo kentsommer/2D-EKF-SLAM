@@ -30,7 +30,33 @@ Adept MobileRobots, 10 Columbia Drive, Amherst, NH 03031; +1-603-881-7960
 
 #include "Aria.h"
 #include "odometry/kalmanfilter.h"
-#include "simulator/simulator.h"
+
+
+////////////////////////////////////////
+//Packet handler for real simulation x, y, phi, time
+int realTime, realint, simint;
+int realX, realY, realZ, realPhi;
+
+bool updateRealPose(ArRobotPacket* pkt)
+{
+  if(pkt->getID() != 0x62) return false; // SIMSTAT has id 0x62
+  
+   char a = pkt->bufToByte();  // unused byte
+   char b = pkt->bufToByte();  // unused byte
+   
+   ArTypes::UByte4 flags = pkt->bufToUByte4();
+   simint = pkt->bufToUByte2();
+   realint = pkt->bufToUByte2();
+   realTime = pkt->bufToUByte2();
+  
+   realX = pkt->bufToByte4();
+   realY = pkt->bufToByte4();
+   realZ = pkt->bufToByte4();
+   realPhi = pkt->bufToByte4();
+   
+   return true;
+}
+//////////////////////////////////////
 
 
 int main(int argc, char **argv)
@@ -119,8 +145,12 @@ int main(int argc, char **argv)
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
   
   KalmanFilter* ekf = new KalmanFilter(&robot);
-  int* buffer = new int[3];
-  Simulator* sim = new Simulator(&robot);
+  
+  //register packet handler
+  ArGlobalRetFunctor1<bool, ArRobotPacket *> ph(&updateRealPose);
+  robot.addPacketHandler(&ph);
+  robot.comInt(ArCommands::SIM_STAT, 2);
+  
   std::cout << "Time, RealX, RealY, RealPhi, EKFx, EKFy, EKFphi\n";
   
   
@@ -141,7 +171,7 @@ int main(int argc, char **argv)
     t2 = std::chrono::high_resolution_clock::now();
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     dt = (double)microseconds / 1000000.0;
-    //ekf->propagate((int)dt);
+    ekf->propagate(dt);
     
     
 //     x2 = x1 + dt*V*cos(phi1);
@@ -164,13 +194,11 @@ int main(int argc, char **argv)
 //     pkt.byte4ToBuf(0);
 //     pkt.finalizePacket();
 //     robot.getDeviceConnection()->write(pkt.getBuf(), pkt.getLength());
-    
-    int time = sim->getRealXYPhi(buffer);
-    
-    std::cout << time << ", ";
-    std::cout << buffer[0] << ", ";
-    std::cout << buffer[1] << ", ";
-    std::cout << buffer[2] << ", ";
+        
+    std::cout << dt << ", ";
+    std::cout << realX << ", ";
+    std::cout << realY << ", ";
+    std::cout << realPhi << ", ";
     std::cout << ekf->X << ", ";
     std::cout << ekf->Y << ", ";
     std::cout << ekf->Phi*180.0/3.141592654 << ", ";
