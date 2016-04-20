@@ -30,6 +30,7 @@ Adept MobileRobots, 10 Columbia Drive, Amherst, NH 03031; +1-603-881-7960
 
 #include "Aria.h"
 #include "odometry/kalmanfilter.h"
+#include "movement/movementcontroller.h"
 
 
 ////////////////////////////////////////
@@ -114,12 +115,25 @@ int main(int argc, char **argv)
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
   
-  /*
+/*  
   robot.lock();
   robot.setVel2(200, 150);
   robot.unlock();
   //*/
 
+  MovementController* mov = new MovementController(&robot, nullptr);
+  mov->start();
+  std::cout << "Started\n";
+  mov->join();
+  std::cout << "Joined\n";
+  robot.waitForRunExit();
+  std::cout << "waiting\n";
+  Aria::exit(0);
+  std::cout << "Aria done\n";
+  return 0;
+  
+  
+  /*
   // add a set of actions that combine together to effect the wander behavior
   ArActionStallRecover recover;
   ArActionBumpers bumpers;

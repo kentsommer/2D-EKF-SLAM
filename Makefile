@@ -8,13 +8,14 @@ SICKOUT = sickReadings
 
 MAININ = wander.cpp
 ODOMIN = odometry/kalmanfilter.cpp
+MOVEIN = movement/movementcontroller.cpp
 SICKIN = sick/sickReadings.cpp
 
 all: wander
 
-wander: $(MAININ) $(ODOMIN)
+wander: $(MAININ) $(ODOMIN) $(MOVEIN)
 	mkdir -p $(OUTPATH)
-	$(CC) -o $(OUTPATH)/$(MAINOUT) $(ODOMIN) $(MAININ) $(CFLAGS)
+	$(CC) -o $(OUTPATH)/$(MAINOUT) $(MOVEIN) $(ODOMIN) $(MAININ) $(CFLAGS)
 
 sick: $(SICKIN)
 	mkdir -p $(SICKPATH)
