@@ -6,13 +6,12 @@ MAINOUT = wander
 
 MAININ = wander.cpp
 ODOMIN = odometry/kalmanfilter.cpp
-SIMIN = simulator/simulator.cpp
 
 all: wander
 
-wander: $(MAININ) $(ODOMIN) $(SIMIN)
+wander: $(MAININ) $(ODOMIN)
 	mkdir -p $(OUTPATH)
-	$(CC) -o $(OUTPATH)/$(MAINOUT) $(SIMIN) $(ODOMIN) $(MAININ) $(CFLAGS)
+	$(CC) -o $(OUTPATH)/$(MAINOUT) $(ODOMIN) $(MAININ) $(CFLAGS)
 
 clean:
 	rm -rf $(OUTPATH)/$(MAINOUT)

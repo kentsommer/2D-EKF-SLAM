@@ -17,7 +17,7 @@ public:
   double Phi = 0.0;
   
   KalmanFilter(ArRobot* robot);
-  void propagate(int dt);
+  void propagate(double dt);
   
 private:
   ArRobot* robot;
