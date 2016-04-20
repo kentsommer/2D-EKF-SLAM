@@ -27,22 +27,11 @@ Adept MobileRobots, 10 Columbia Drive, Amherst, NH 03031; +1-603-881-7960
 #include <unistd.h>
 #include <cmath>
 #include <chrono>
+
 #include "Aria.h"
+#include "odometry/kalmanfilter.h"
+#include "simulator/simulator.h"
 
-
-/** @example wander.cpp 
- * Example using actions and range devices to implement a random wander avoiding obstacles.
- *
- *  This program will just have the robot wander around. It uses some avoidance 
- *  actions if obstacles are detected with the sonar or laser (if robot has a
- *  laser), otherwise it just has a constant forward velocity.
- * 
- *  Press Control-C or Escape keys to exit.
- *  
- * This program will work either with the MobileSim simulator or on a real
- * robot's onboard computer.  (Or use -remoteHost to connect to a wireless
- * ethernet-serial bridge.)
-*/
 
 int main(int argc, char **argv)
 {
@@ -118,56 +107,73 @@ int main(int argc, char **argv)
   
   robot.requestEncoderPackets();
   
-  double x1 = 0;
-  double y1 = 0;
-  double phi1 = 0;
+//   double x1 = 0;
+//   double y1 = 0;
+//   double phi1 = 0;
   double dt = 0.001;
-  
+/*  
   double rx, ry, rphi;
-  double x2, y2, phi2;
+  double x2, y2, phi2;*/
   
   std::chrono::high_resolution_clock::time_point t1; 
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
   
+  KalmanFilter* ekf = new KalmanFilter(&robot);
+  int* buffer = new int[3];
+  Simulator* sim = new Simulator(&robot);
+  std::cout << "Time, RealX, RealY, RealPhi, EKFx, EKFy, EKFphi\n";
+  
+  
   while (1) {
-    robot.lock();
-    long L = robot.getLeftEncoder();
-    long R = robot.getRightEncoder();
-    double V = robot.getVel();
-    double RV = robot.getRightVel();
-    double LV = robot.getLeftVel();
-    double RTV = robot.getRotVel() * 3.141592654 / 180.0;
-    rx = robot.getX();
-    ry = robot.getY();
-    //*/
-    robot.unlock();
+//     robot.lock();
+//     long L = robot.getLeftEncoder();
+//     long R = robot.getRightEncoder();
+//     double V = robot.getVel();
+//     double RV = robot.getRightVel();
+//     double LV = robot.getLeftVel();
+//     double RTV = robot.getRotVel() * 3.141592654 / 180.0;
+//     rx = robot.getX();
+//     ry = robot.getY();
+//     //*/
+//     robot.unlock();
     
     t1 = t2;
     t2 = std::chrono::high_resolution_clock::now();
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     dt = (double)microseconds / 1000000.0;
-    
-    x2 = x1 + dt*V*cos(phi1);
-    y2 = y1 + dt*V*sin(phi1);
-    phi2 = phi1 + dt*RTV;
-    //*/
-    
-    if (phi2 > 2*3.141592654) phi2 -= (3.141592654*2);
-    if (phi2 < 0.0) phi2 += (3.141592654*2);
-    
-    x1 = x2;
-    y1 = y2;
-    phi1 = phi2;
+    //ekf->propagate((int)dt);
     
     
+//     x2 = x1 + dt*V*cos(phi1);
+//     y2 = y1 + dt*V*sin(phi1);
+//     phi2 = phi1 + dt*RTV;
+//     //*/
+//     
+//     if (phi2 > 2*3.141592654) phi2 -= (3.141592654*2);
+//     if (phi2 < 0.0) phi2 += (3.141592654*2);
+//     
+//     x1 = x2;
+//     y1 = y2;
+//     phi1 = phi2;
     
-    std::cout << x1 << ", ";
-    std::cout << rx << ", ";
-    std::cout << y1 << ", ";
-    std::cout << ry << ", ";
-    std::cout << phi1*180.0/3.141592654 << ", ";
-    std::cout << (x1 - rx) << ", ";
-    std::cout << (y1 - ry) << ", ";
+//     ArRobotPacket pkt;
+//     pkt.setID(ArCommands::SIM_STAT);
+//     pkt.uByteToBuf(0); // argument type: ignored.
+//     pkt.byte4ToBuf(0);
+//     pkt.byte4ToBuf(0);
+//     pkt.byte4ToBuf(0);
+//     pkt.finalizePacket();
+//     robot.getDeviceConnection()->write(pkt.getBuf(), pkt.getLength());
+    
+    int time = sim->getRealXYPhi(buffer);
+    
+    std::cout << time << ", ";
+    std::cout << buffer[0] << ", ";
+    std::cout << buffer[1] << ", ";
+    std::cout << buffer[2] << ", ";
+    std::cout << ekf->X << ", ";
+    std::cout << ekf->Y << ", ";
+    std::cout << ekf->Phi*180.0/3.141592654 << ", ";
     std::cout << std::endl;
     //std::cout << RTV << std::endl;
     //std::cout << L << ", " << R << ", " << V << ", " << LV << ", " << RV << std::endl;

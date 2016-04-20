@@ -1,15 +1,18 @@
 CC = g++
 CFLAGS = -fPIC -I/usr/local/Aria/include -L/usr/local/Aria/lib -lAria -lpthread -ldl -lrt -std=c++11
 
-OBJS = wander.cpp
 OUTPATH = ./build
-OUT = wander
+MAINOUT = wander
+
+MAININ = wander.cpp
+ODOMIN = odometry/kalmanfilter.cpp
+SIMIN = simulator/simulator.cpp
 
 all: wander
 
-wander: $(OBJS)
+wander: $(MAININ) $(ODOMIN) $(SIMIN)
 	mkdir -p $(OUTPATH)
-	$(CC) -o $(OUTPATH)/$(OUT) $(OBJS) $(CFLAGS)
+	$(CC) -o $(OUTPATH)/$(MAINOUT) $(SIMIN) $(ODOMIN) $(MAININ) $(CFLAGS)
 
 clean:
-	rm -rf $(OUTPATH)/$(OUT)
+	rm -rf $(OUTPATH)/$(MAINOUT)
