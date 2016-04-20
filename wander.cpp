@@ -114,13 +114,14 @@ int main(int argc, char **argv)
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
   
+  /*
   robot.lock();
   robot.setVel2(200, 150);
   robot.unlock();
   //*/
 
   // add a set of actions that combine together to effect the wander behavior
-  /*ArActionStallRecover recover;
+  ArActionStallRecover recover;
   ArActionBumpers bumpers;
   ArActionAvoidFront avoidFrontNear("Avoid Front Near", 225, 0);
   ArActionAvoidFront avoidFrontFar;
