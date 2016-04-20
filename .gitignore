@@ -12,6 +12,7 @@
 # Build directory #
 ###################
 build/
+sbuild/
 *.kdev4/
 *.kdev4
 
