@@ -25,6 +25,9 @@ void turn_right(ArRobot* robot);
 void stop(ArRobot* robot);
 double getClosestReading(ArSick* sick);
 bool shouldTurn(ArSick* sick);
+bool canAlignRight(ArSick* sick);
+bool canAlignLeft(ArSick* sick);
+void alignToWall(ArRobot* robot, ArSick* sick);
 
 
 class MovementController
