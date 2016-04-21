@@ -39,20 +39,6 @@ void* move_control(void* args){
     else{
       move_forward(info->robot);
     }
-
-/*    if(canAlignRight(info->sick)){
-      std::cout << "Can Align Right" << "\n";
-    }
-    else{
-      std::cout << "Cannot Align Right" << "\n";
-    }*/
-
-/*    if(canAlignLeft(info->sick)){
-      std::cout << "Can Align Left" << "\n";
-    }
-    else{
-      std::cout << "Cannot Align Left" << "\n";
-    }*/
     alignToWall(info->robot, info->sick);
 
     usleep(100000);
