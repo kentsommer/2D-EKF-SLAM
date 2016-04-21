@@ -66,10 +66,19 @@ int main(int argc, char **argv)
   ArArgumentParser argParser(&argc, argv);
   argParser.loadDefaultArguments();
   ArRobot robot;
-  ArRobotConnector robotConnector(&argParser, &robot);
-  ArLaserConnector laserConnector(&argParser, &robot, &robotConnector);
+  ArSick sick;
+  //ArRobotConnector robotConnector(&argParser, &robot);
+  //ArLaserConnector laserConnector(&argParser, &robot, &robotConnector);
 
-  if(!robotConnector.connectRobot())
+  ArSimpleConnector connector(&argc, argv);
+
+  if (!connector.parseArgs() || argc > 1)
+  {
+    connector.logOptions();
+    exit(1);
+  }
+
+/*  if(!robotConnector.connectRobot())
   {
     ArLog::log(ArLog::Terse, "Could not connect to the robot.");
     if(argParser.checkHelpAndWarnUnparsed())
@@ -79,16 +88,16 @@ int main(int argc, char **argv)
         Aria::exit(1);
         return 1;
     }
-  }
+  }*/
 
 
   // Trigger argument parsing
-  if (!Aria::parseArgs() || !argParser.checkHelpAndWarnUnparsed())
+/*  if (!Aria::parseArgs() || !argParser.checkHelpAndWarnUnparsed())
   {
     Aria::logOptions();
     Aria::exit(1);
     return 1;
-  }
+  }*/
 
   ArKeyHandler keyHandler;
   Aria::setKeyHandler(&keyHandler);
@@ -100,14 +109,33 @@ int main(int argc, char **argv)
   
   ArSonarDevice sonar;
   robot.addRangeDevice(&sonar);
+  robot.addRangeDevice(&sick);
+
+  if (!connector.connectRobot(&robot))
+  {
+    printf("Could not connect to robot... exiting\n");
+    Aria::shutdown();
+    return 1;
+  }
 
   robot.runAsync(true);
 
   
-  // try to connect to laser. if fail, warn but continue, using sonar only
-  if(!laserConnector.connectLasers())
+  // now set up the laser
+  sick.configureShort(false,ArSick::BAUD38400,ArSick::DEGREES180,ArSick::INCREMENT_ONE);
+  connector.setupLaser(&sick);
+
+
+  // now that we're connected to the robot, connect to the laser
+  sick.runAsync();
+
+
+  if (!sick.blockingConnect())
   {
-    ArLog::log(ArLog::Normal, "Warning: unable to connect to requested lasers, will wander using robot sonar only.");
+    printf("Could not connect to SICK laser... exiting\n");
+    robot.disconnect();
+    Aria::shutdown();
+    return 1;
   }
 
 
@@ -121,7 +149,7 @@ int main(int argc, char **argv)
   robot.unlock();
   //*/
 
-  MovementController* mov = new MovementController(&robot, nullptr);
+  MovementController* mov = new MovementController(&robot, &sick);
   mov->start();
   std::cout << "Started\n";
   mov->join();

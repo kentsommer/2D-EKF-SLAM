@@ -23,6 +23,8 @@ void move_backward(ArRobot* robot);
 void turn_left(ArRobot* robot);
 void turn_right(ArRobot* robot);
 void stop(ArRobot* robot);
+double getClosestReading(ArSick* sick);
+bool shouldTurn(ArSick* sick);
 
 
 class MovementController
