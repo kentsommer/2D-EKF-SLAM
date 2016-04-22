@@ -132,9 +132,9 @@ bool canAlignRight(ArSick* sick){
   if(readings->size() != 0){
     // if the standard deviation of the slopes is very small then they are same line (wall)
     // Can use to align
-    float slope1 = ((*readings)[160].getLocalY() - (*readings)[170].getLocalY())/((*readings)[160].getLocalX() - (*readings)[170].getLocalX());
-    float slope2 = ((*readings)[150].getLocalY() - (*readings)[170].getLocalY())/((*readings)[150].getLocalX() - (*readings)[170].getLocalX());
-    float slope3 = ((*readings)[150].getLocalY() - (*readings)[160].getLocalY())/((*readings)[150].getLocalX() - (*readings)[160].getLocalX());
+    float slope1 = getSlope(160, 170, readings);
+    float slope2 = getSlope(150, 170, readings);
+    float slope3 = getSlope(150, 160, readings);
     float Ex2 = (slope1*slope1+slope2*slope2+slope3*slope3)/3;
     float Ex = (slope1+slope2+slope3)/3;
     float stdDeviation = sqrt(Ex2 - Ex*Ex);
@@ -153,9 +153,9 @@ bool canAlignLeft(ArSick* sick){
   if(readings->size() != 0){
     // if the standard deviation of the slopes is very small then they are same line (wall)
     // Can use to align
-    float slope1 = ((*readings)[20].getLocalY() - (*readings)[10].getLocalY())/((*readings)[20].getLocalX() - (*readings)[10].getLocalX());
-    float slope2 = ((*readings)[30].getLocalY() - (*readings)[10].getLocalY())/((*readings)[30].getLocalX() - (*readings)[10].getLocalX());
-    float slope3 = ((*readings)[30].getLocalY() - (*readings)[20].getLocalY())/((*readings)[30].getLocalX() - (*readings)[20].getLocalX());
+    float slope1 = getSlope(20, 10, readings);
+    float slope2 = getSlope(30, 10, readings);
+    float slope3 = getSlope(30, 20, readings);
     float Ex2 = (slope1*slope1+slope2*slope2+slope3*slope3)/3;
     float Ex = (slope1+slope2+slope3)/3;
     float stdDeviation = sqrt(Ex2 - Ex*Ex);
