@@ -32,7 +32,11 @@ void* move_control(void* args){
 
 
   while(1){
-    if(shouldTurn(info->sick)){
+    if(shouldTurnLeft(info->sick)){
+      makeLeftTurn(info->robot, info->sick);
+      continue;
+    }
+    else if(shouldStop(info->sick)){
       stop(info->robot);
     }
     else{
@@ -102,15 +106,16 @@ double getClosestReading(ArSick* sick){
   return dist;
 }
 
-//Currently this just averages, should probably rewrite to check averages on both sides
-//Individually so as to avoid running half the robot into a wall :D
-bool shouldTurn(ArSick* sick){
+
+bool shouldStop(ArSick* sick){
   float distToFrontWallLeft = 0;
   float distToFrontWallRight = 0;
   bool shouldTurn = false;
   sick->lockDevice();
   std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
   sick->unlockDevice();
+
+  if(readings->size() == 0){ return false; }
   
   //Sample every 2nd reading from 80 + 
   for(int i=0;i<=10;i=i+2){
@@ -130,6 +135,76 @@ bool shouldTurn(ArSick* sick){
       shouldTurn = true;
   }
   return shouldTurn; 
+}
+
+bool shouldTurnLeft(ArSick* sick){
+  float distToLeftWall = 0;
+  float threshDistToLeftWall = 1500;
+  bool shouldTurn = false;
+  sick->lockDevice();
+  std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
+  sick->unlockDevice();
+
+  if(readings->size() == 0){ return false; }
+  int count = 0;
+  for (double theta=0.0;theta<50.0; theta+=5.0){
+    if(readings->size() != 0){
+        for (int i=0;i<5; i++){
+          count = count + 1;
+          distToLeftWall += fabs(((*readings)[theta+i].getRange())*sin((theta+i)*PI/180));
+        }
+    }
+  }
+  distToLeftWall/=count; // Average the distnace
+  //std::cout << "distance to left average is " << distToLeftWall << "\n";
+  //std::cout << "distance to left thresho is " << threshDistToLeftWall << "\n";
+  if (distToLeftWall > threshDistToLeftWall){ // 1 Meters, need to figure out what distance is good
+      shouldTurn = true;
+  }
+  return shouldTurn; 
+}
+
+void makeLeftTurn(ArRobot* robot, ArSick* sick)
+{
+  //// find the readings which have the max value, get that angle and make a turn in
+  //// that direction.
+  sick->lockDevice();
+  std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
+  sick->unlockDevice();
+  
+  double max_range = 0.0;
+  double sum = 0.0;
+  double max_theta = 0.0;
+
+
+  for (double theta=10.0;theta<80.0; theta+=10.0)
+  {
+      sum = 0.0;
+      if(readings->size() != 0){
+        for (int i=0;i<10; i++)
+        {
+          sum += (*readings)[theta+i].getRange();
+        }
+        sum /= 10.0;
+        if (sum > max_range)
+        {
+          max_range = sum;
+          max_theta = theta;
+        }
+      }
+  }
+  //printf("%Decided on a turn angle of %lf\n",(+90.0 - max_theta ));
+  std::cout << "decided on turn angle of " << (+90.0 - max_theta) << "\n";
+  // for 170 it shud be -90 and for 10 it shud be 90
+  max_theta = (max_theta > 90.0) ? (80 - max_theta) : (100 - max_theta);
+  
+  robot->lock();
+  robot->setVel2(0.0, 0.0);
+  robot->unlock();
+      
+  robot->lock();
+  robot->setDeltaHeading(double(max_theta)/2);
+  robot->unlock();
 }
 
 
@@ -222,6 +297,7 @@ void alignToWall(ArRobot* robot, ArSick* sick){
 }
 
 
+//Helper functions for Alignment
 float getSlope(float angle1, float angle2, std::vector<ArSensorReading> *readings){
   return ((*readings)[angle1].getLocalY() - (*readings)[angle2].getLocalY())/((*readings)[angle1].getLocalX() - (*readings)[angle2].getLocalX());
 }

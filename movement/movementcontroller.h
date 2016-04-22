@@ -24,7 +24,7 @@ void turn_left(ArRobot* robot);
 void turn_right(ArRobot* robot);
 void stop(ArRobot* robot);
 double getClosestReading(ArSick* sick);
-bool shouldTurn(ArSick* sick);
+bool shouldStop(ArSick* sick);
 bool canAlignRight(ArSick* sick);
 bool canAlignLeft(ArSick* sick);
 void alignToWall(ArRobot* robot, ArSick* sick);
@@ -33,6 +33,8 @@ float getDistance(float angle1, float angle2, float theta, int indc, std::vector
 float getCorrectionAngleCombined(float theta, float distRW, float distLW);
 float getCorrectionAngle(float theta, float dist);
 float getTheta(float slope);
+bool shouldTurnLeft(ArSick* sick);
+void makeLeftTurn(ArRobot* robot, ArSick* sick);
 
 
 class MovementController
