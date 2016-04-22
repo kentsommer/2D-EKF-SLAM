@@ -105,20 +105,28 @@ double getClosestReading(ArSick* sick){
 //Currently this just averages, should probably rewrite to check averages on both sides
 //Individually so as to avoid running half the robot into a wall :D
 bool shouldTurn(ArSick* sick){
-  float distToFrontWall = 0;
+  float distToFrontWallLeft = 0;
+  float distToFrontWallRight = 0;
   bool shouldTurn = false;
   sick->lockDevice();
   std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
   sick->unlockDevice();
   
   //Sample every 2nd reading from 80 + 
-  for(int i=0;i<=20;i=i+2){
-      if(readings->size() != 0){
-        distToFrontWall += fabs(((*readings)[80+i].getRange())*sin((80+i)*PI/180));
-      }
+  for(int i=0;i<=10;i=i+2){
+    if(readings->size() != 0){
+      distToFrontWallLeft += fabs(((*readings)[80+i].getRange())*sin((80+i)*PI/180));
+    }
   }
-  distToFrontWall/=10; // Average the distnace
-  if (distToFrontWall < 1000){ // 1 Meters, need to figure out what distance is good
+
+  for(int i=0;i<=10;i=i+2){
+    if(readings->size() != 0){
+      distToFrontWallRight += fabs(((*readings)[90+i].getRange())*sin((90+i)*PI/180));
+    }
+  }
+  distToFrontWallLeft/=5; // Average the distnace
+  distToFrontWallRight/=5; //Average the distance
+  if (distToFrontWallLeft < 1000 || distToFrontWallRight < 1000){ // 1 Meters, need to figure out what distance is good
       shouldTurn = true;
   }
   return shouldTurn; 
