@@ -2,7 +2,6 @@
 #include "Aria.h"
 
 #define PI 3.14159265
-#define FRONT_WALL_THRESHOLD 3000
 
 MovementController::MovementController(ArRobot* robot, ArSick* sick){
   this->robot = robot;
@@ -108,7 +107,6 @@ double getClosestReading(ArSick* sick){
 bool shouldTurn(ArSick* sick){
   float distToFrontWall = 0;
   bool shouldTurn = false;
-  float pi = 3.14159265;
   sick->lockDevice();
   std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
   sick->unlockDevice();
@@ -116,7 +114,7 @@ bool shouldTurn(ArSick* sick){
   //Sample every 2nd reading from 80 + 
   for(int i=0;i<=20;i=i+2){
       if(readings->size() != 0){
-        distToFrontWall += fabs(((*readings)[80+i].getRange())*sin((80+i)*pi/180));
+        distToFrontWall += fabs(((*readings)[80+i].getRange())*sin((80+i)*PI/180));
       }
   }
   distToFrontWall/=10; // Average the distnace
@@ -174,49 +172,68 @@ void alignToWall(ArRobot* robot, ArSick* sick){
   std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
   sick->unlockDevice();
 
-  float distToLeftThresh = 970; //Chosen 
-  float distToRightThresh = 970;
-  float thThresh = 2;
   float correctionAngle = 0;
   
   if (canAlignRight(sick) && canAlignLeft(sick) && readings->size() != 0){
     std::cout << "Aligning to Both Lines" << "\n";
-    float measuredRight = ((*readings)[155].getLocalY() - (*readings)[170].getLocalY())/((*readings)[155].getLocalX() - (*readings)[170].getLocalX());
-    float thRight = atan(measuredRight)*180/PI;
-    float measuredLeft = ((*readings)[25].getLocalY() - (*readings)[10].getLocalY())/((*readings)[25].getLocalX() - (*readings)[10].getLocalX());
-    float thLeft = atan(measuredLeft)*180/PI;
+    float rightSlope = getSlope(155, 170, readings);
+    float leftSlope = getSlope(25, 10, readings);
+    float thRight = getTheta(rightSlope);
+    float thLeft = getTheta(leftSlope);
     float distToRightWall = 0.0, distToLeftWall = 0.0;
     for(int i=0;i<=15;i++){
-      distToRightWall += ((*readings)[155+i].getRange())*cos((25-thRight-i)*PI/180)/15.0;
-      distToLeftWall += ((*readings)[25-i].getRange())*cos((25-thLeft-i)*PI/180)/15.0;
+      distToRightWall += getDistance(155, 25, thRight, i, readings)/15.0;
+      distToLeftWall += getDistance(25, 25, thLeft, i, readings)/15.0;
     }
-
     float theta = (thLeft+thRight)/2;
-
-    correctionAngle = ((theta/3) * double(fabs(theta) > thThresh)) + (5 * double(distToRightWall < distToRightThresh)) - (5 * double(distToLeftWall < distToLeftThresh));
+    correctionAngle = getCorrectionAngleCombined(theta, distToRightWall, distToLeftWall);
     robot->setDeltaHeading(correctionAngle);
   }
   else if (canAlignRight(sick) && readings->size() != 0){
     std::cout << "Aligning to Right Line" << "\n";
-    float measuredRight = ((*readings)[155].getLocalY() - (*readings)[170].getLocalY())/((*readings)[155].getLocalX() - (*readings)[170].getLocalX());
-    float thRight = atan(measuredRight)*180/PI;
+    float rightSlope = getSlope(155, 170, readings);
+    float thRight = getTheta(rightSlope);
     float distToRightWall = 0.0;
     for(int i=0;i<=15;i++){
-      distToRightWall += ((*readings)[155+i].getRange())*cos((25-thRight-i)*PI/180)/15.0;
+      distToRightWall += getDistance(155, 25, thRight, i, readings)/15.0;
     }
-    correctionAngle = ((thRight/3) * double(fabs(thRight) > thThresh)) + (5 * double(distToRightWall < distToRightThresh));
+    correctionAngle = getCorrectionAngle(thRight, distToRightWall);
     robot->setDeltaHeading(correctionAngle);   
   }
   else if (canAlignLeft(sick) && readings->size() != 0){
     std::cout << "Aligning to Left Line" << "\n"; 
-    float measuredLeft = ((*readings)[25].getLocalY() - (*readings)[10].getLocalY())/((*readings)[25].getLocalX() - (*readings)[10].getLocalX());
-    float thLeft = atan(measuredLeft)*180/PI;
+    float leftSlope = getSlope(25, 10, readings);
+    float thLeft = getTheta(leftSlope);
     float distToLeftWall = 0.0;
     for(int i=0;i<=15;i++){
-      distToLeftWall += ((*readings)[25-i].getRange())*cos((25-thLeft-i)*PI/180)/15.0;
+      distToLeftWall += getDistance(25, 25, thLeft, i, readings)/15.0;
     }
-    correctionAngle = ((thLeft/3) * double(fabs(thLeft) > thThresh)) - (5 * double(distToLeftWall < distToLeftThresh));
+    correctionAngle = getCorrectionAngle(thLeft, distToLeftWall);
     robot->setDeltaHeading(correctionAngle);       
   }
 }
 
+
+float getSlope(float angle1, float angle2, std::vector<ArSensorReading> *readings){
+  return ((*readings)[angle1].getLocalY() - (*readings)[angle2].getLocalY())/((*readings)[angle1].getLocalX() - (*readings)[angle2].getLocalX());
+}
+
+float getDistance(float angle1, float angle2, float theta, int indc, std::vector<ArSensorReading> *readings){
+  return ((*readings)[angle1+indc].getRange())*cos((angle2-theta-indc)*PI/180);
+}
+
+float getCorrectionAngleCombined(float theta, float distRW, float distLW){
+  float threshDist = 970;
+  float thThresh = 2;
+  return ((theta/3) * double(fabs(theta) > thThresh)) + (5 * double(distRW < threshDist)) - (5 * double(distLW < threshDist));
+}
+
+float getCorrectionAngle(float theta, float dist){
+  float threshDist = 970;
+  float thThresh = 2;
+  return ((theta/3) * double(fabs(theta) > thThresh)) + (5 * double(dist < threshDist));
+}
+
+float getTheta(float slope){
+  return atan(slope)*180/PI;
+}
