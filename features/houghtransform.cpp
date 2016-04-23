@@ -36,6 +36,16 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
     std::cout << (int)houghGrid[peaks[i]] << std::endl;
   }
   
+//   struct houghLine{
+//   double radius;
+//   double theta;
+//   int weight;
+//   int numPoints;
+// };
+// 
+//   struct houghLine* line = new struct houghLine;
+//   line->radius = 
+  
   delete[] peaks;
 }
 

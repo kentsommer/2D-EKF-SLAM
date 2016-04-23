@@ -10,6 +10,8 @@
 struct houghLine{
   double radius;
   double theta;
+  int weight;
+  int numPoints;
 };
 
 

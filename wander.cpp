@@ -150,38 +150,38 @@ int main(int argc, char **argv)
   robot.unlock();
   //*/
 
-  while (1){
-    sick.lockDevice();
-    std::vector<ArSensorReading> *readings = sick.getRawReadingsAsVector();
-    sick.unlockDevice();
-    if (readings->size() > 0){
-      std::cout << readings->size() << " ";
-//       for (int i=0; i<181; i++){
-//         std::cout << (*readings)[i].getLocalY() << " ";
-//       }
-//       std::cout << std::endl;
-//       std::cout << (*readings)[90].getLocalX() << " ";
-//       std::cout << (*readings)[90].getLocalY() << std::endl;
-      HoughTransform* h = new HoughTransform();
-//       (*readings)[0] = (*readings)[90];
-      h->getLines(readings, nullptr);
-      std::cout << "Done!\n";
-      sleep(100000);
-    }
-  }
-  return 0;
+//   while (1){
+//     sick.lockDevice();
+//     std::vector<ArSensorReading> *readings = sick.getRawReadingsAsVector();
+//     sick.unlockDevice();
+//     if (readings->size() > 0){
+//       std::cout << readings->size() << " ";
+// //       for (int i=0; i<181; i++){
+// //         std::cout << (*readings)[i].getLocalY() << " ";
+// //       }
+// //       std::cout << std::endl;
+// //       std::cout << (*readings)[90].getLocalX() << " ";
+// //       std::cout << (*readings)[90].getLocalY() << std::endl;
+//       HoughTransform* h = new HoughTransform();
+// //       (*readings)[0] = (*readings)[90];
+//       h->getLines(readings, nullptr);
+//       std::cout << "Done!\n";
+//       sleep(100000);
+//     }
+//   }
+//   return 0;
   
   
-  MovementController* mov = new MovementController(&robot, &sick);
-  mov->start();
-  std::cout << "Started\n";
-  mov->join();
-  std::cout << "Joined\n";
-  robot.waitForRunExit();
-  std::cout << "waiting\n";
-  Aria::exit(0);
-  std::cout << "Aria done\n";
-  return 0;
+//   MovementController* mov = new MovementController(&robot, &sick);
+//   mov->start();
+//   std::cout << "Started\n";
+//   mov->join();
+//   std::cout << "Joined\n";
+//   robot.waitForRunExit();
+//   std::cout << "waiting\n";
+//   Aria::exit(0);
+//   std::cout << "Aria done\n";
+//   return 0;
   
   
   /*
@@ -220,6 +220,9 @@ int main(int argc, char **argv)
   std::cout << "Time, RealX, RealY, RealPhi, EKFx, EKFy, EKFphi\n";
   
   
+  robot.lock();
+  robot.setVel2(200, 150);
+  robot.unlock();
   while (1) {
 //     robot.lock();
 //     long L = robot.getLeftEncoder();
@@ -237,7 +240,7 @@ int main(int argc, char **argv)
     t2 = std::chrono::high_resolution_clock::now();
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     dt = (double)microseconds / 1000000.0;
-    ekf->propagate(dt);
+    ekf->doPropagation(dt);
     
     
 //     x2 = x1 + dt*V*cos(phi1);
@@ -261,14 +264,14 @@ int main(int argc, char **argv)
 //     pkt.finalizePacket();
 //     robot.getDeviceConnection()->write(pkt.getBuf(), pkt.getLength());
         
-    std::cout << dt << ", ";
-    std::cout << realX << ", ";
-    std::cout << realY << ", ";
-    std::cout << realPhi << ", ";
-    std::cout << ekf->X << ", ";
-    std::cout << ekf->Y << ", ";
-    std::cout << ekf->Phi*180.0/3.141592654 << ", ";
-    std::cout << std::endl;
+//     std::cout << dt << ", ";
+//     std::cout << realX << ", ";
+//     std::cout << realY << ", ";
+//     std::cout << realPhi << ", ";
+//     std::cout << ekf->X << ", ";
+//     std::cout << ekf->Y << ", ";
+//     std::cout << ekf->Phi*180.0/3.141592654 << ", ";
+//     std::cout << std::endl;
     //std::cout << RTV << std::endl;
     //std::cout << L << ", " << R << ", " << V << ", " << LV << ", " << RV << std::endl;
     usleep(1000);
