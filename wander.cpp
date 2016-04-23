@@ -31,6 +31,7 @@ Adept MobileRobots, 10 Columbia Drive, Amherst, NH 03031; +1-603-881-7960
 #include "Aria.h"
 #include "odometry/kalmanfilter.h"
 #include "movement/movementcontroller.h"
+#include "features/houghtransform.h"
 
 
 ////////////////////////////////////////
@@ -149,6 +150,28 @@ int main(int argc, char **argv)
   robot.unlock();
   //*/
 
+  while (1){
+    sick.lockDevice();
+    std::vector<ArSensorReading> *readings = sick.getRawReadingsAsVector();
+    sick.unlockDevice();
+    if (readings->size() > 0){
+      std::cout << readings->size() << " ";
+//       for (int i=0; i<181; i++){
+//         std::cout << (*readings)[i].getLocalY() << " ";
+//       }
+//       std::cout << std::endl;
+//       std::cout << (*readings)[90].getLocalX() << " ";
+//       std::cout << (*readings)[90].getLocalY() << std::endl;
+      HoughTransform* h = new HoughTransform();
+//       (*readings)[0] = (*readings)[90];
+      h->getLines(readings, nullptr);
+      std::cout << "Done!\n";
+      sleep(100000);
+    }
+  }
+  return 0;
+  
+  
   MovementController* mov = new MovementController(&robot, &sick);
   mov->start();
   std::cout << "Started\n";

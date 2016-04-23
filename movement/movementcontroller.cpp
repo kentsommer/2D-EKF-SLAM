@@ -47,16 +47,6 @@ void* move_control(void* args){
     usleep(100000);
   }
 
-  move_forward(info->robot);
-  usleep(3000000);
-  turn_left(info->robot);
-  usleep(3000000);
-  move_forward(info->robot);
-  usleep(3000000);
-  turn_left(info->robot);
-  usleep(3000000);
-  stop(info->robot);
-
   delete info;
   pthread_exit(nullptr);
 }
