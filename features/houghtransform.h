@@ -10,8 +10,6 @@
 struct houghLine{
   double radius;
   double theta;
-  int weight;
-  int numPoints;
 };
 
 
@@ -24,6 +22,9 @@ public:
   static const int RADIUS_SIZE = 2*MAX_DIST/DISTANCE + 1;  //Hough grid size
   static const int ADDITION = RADIUS_SIZE/2;      //used to make radii positive
   
+  static const int MERGE_THETA = 20;
+  static const int MERGE_RADIUS = 3;
+  
   HoughTransform();
   ~HoughTransform();
   
@@ -32,6 +33,17 @@ public:
   void sendHoughToImage(char* filename);
   
 private:
+  struct peakGroup{
+    int maxRadius;
+    int minRadius;
+    int maxTheta;
+    int minTheta;
+    int radius;
+    int theta;
+    int weight;
+    int numPoints;
+  };
+  
   float D_THETA;
   unsigned char* houghGrid = nullptr;
   
