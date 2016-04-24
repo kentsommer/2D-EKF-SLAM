@@ -5,7 +5,7 @@
 #include <cmath>
 #include <chrono>
 #include <unistd.h>
-#include <Eigen/Eigen/Dense>
+#include <Eigen/Dense>
 #include <iostream>
 #include <math.h>
 #include <stdio.h>

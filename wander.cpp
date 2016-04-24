@@ -150,7 +150,7 @@ int main(int argc, char **argv)
   robot.unlock();
   //*/
 
-  while (1){
+/*  while (1){
     sick.lockDevice();
     std::vector<ArSensorReading> *readings = sick.getRawReadingsAsVector();
     sick.unlockDevice();
@@ -169,19 +169,19 @@ int main(int argc, char **argv)
       sleep(100000);
     }
   }
+  return 0;*/
+  
+  
+  MovementController* mov = new MovementController(&robot, &sick);
+  mov->start();
+  std::cout << "Started\n";
+  mov->join();
+  std::cout << "Joined\n";
+  robot.waitForRunExit();
+  std::cout << "waiting\n";
+  Aria::exit(0);
+  std::cout << "Aria done\n";
   return 0;
-  
-  
-//   MovementController* mov = new MovementController(&robot, &sick);
-//   mov->start();
-//   std::cout << "Started\n";
-//   mov->join();
-//   std::cout << "Joined\n";
-//   robot.waitForRunExit();
-//   std::cout << "waiting\n";
-//   Aria::exit(0);
-//   std::cout << "Aria done\n";
-//   return 0;
   
   
   /*
