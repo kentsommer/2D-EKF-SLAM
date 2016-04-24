@@ -135,7 +135,7 @@ bool shouldStop(ArSick* sick){
 
 bool shouldTurnLeft(ArSick* sick){
   float distToLeftWall = 0;
-  float threshDistToLeftWall = 1500;
+  float threshDistToLeftWall = 1200;
   bool shouldTurn = false;
   sick->lockDevice();
   std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
@@ -187,7 +187,7 @@ bool canAlignRight(ArSick* sick){
     float Ex2 = (slope1*slope1+slope2*slope2+slope3*slope3)/3;
     float Ex = (slope1+slope2+slope3)/3;
     float stdDeviation = sqrt(Ex2 - Ex*Ex);
-    if (stdDeviation < 0.015){
+    if (stdDeviation < 0.025){
       return true;
     }
   }
@@ -208,7 +208,7 @@ bool canAlignLeft(ArSick* sick){
     float Ex2 = (slope1*slope1+slope2*slope2+slope3*slope3)/3;
     float Ex = (slope1+slope2+slope3)/3;
     float stdDeviation = sqrt(Ex2 - Ex*Ex);
-    if (stdDeviation < 0.015){
+    if (stdDeviation < 0.025){
       return true;
     }
   }
@@ -221,11 +221,11 @@ void alignToWall(ArRobot* robot, ArSick* sick){
   std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
   sick->unlockDevice();
 
-  float wallDistThresh = 900;
+  float wallDistThresh = 600;
   float correctionAngle = 0;
   
   if (canAlignRight(sick) && canAlignLeft(sick) && readings->size() != 0){
-    //std::cout << "Aligning to Both Lines" << "\n";
+    std::cout << "Aligning to Both Lines" << "\n";
     float rightSlope = getSlope(155, 170, readings);
     float leftSlope = getSlope(25, 10, readings);
     float thRight = getTheta(rightSlope);
@@ -241,13 +241,15 @@ void alignToWall(ArRobot* robot, ArSick* sick){
     if(distToRightWall > distToLeftWall){
       robot->setDeltaHeading(correctionAngle-10);
     }
-    if(distToRightWall < distToLeftWall){
+    if(distToLeftWall > distToRightWall){
       robot->setDeltaHeading(correctionAngle+10);
     }
-    //robot->setDeltaHeading(correctionAngle);
+    else{
+      robot->setDeltaHeading(correctionAngle);
+    }
   }
   else if (canAlignRight(sick) && readings->size() != 0){
-    //std::cout << "Aligning to Right Line" << "\n";
+    std::cout << "Aligning to Right Line" << "\n";
     float rightSlope = getSlope(155, 170, readings);
     float thRight = getTheta(rightSlope);
     float distToRightWall = 0.0;
@@ -263,7 +265,7 @@ void alignToWall(ArRobot* robot, ArSick* sick){
     }  
   }
   else if (canAlignLeft(sick) && readings->size() != 0){
-    //std::cout << "Aligning to Left Line" << "\n";
+    std::cout << "Aligning to Left Line" << "\n";
     float leftSlope = getSlope(25, 10, readings);
     float thLeft = getTheta(leftSlope);
     float distToLeftWall = 0.0;
