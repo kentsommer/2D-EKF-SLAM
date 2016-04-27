@@ -10,6 +10,7 @@
 struct houghLine{
   double radius;
   double theta;
+  double weight;
 };
 
 
@@ -17,19 +18,21 @@ class HoughTransform
 {
 public:
   static const int MAX_DIST = 5000;               //maximum distance (mm) to lines
-  static const int DISTANCE = 100;                //distance between lines detected (mm)
+  static const int DISTANCE = 10;                //distance between lines detected (mm)
   static const int THETA_SIZE = 180;              //number of bins to use for 180 degrees
   static const int RADIUS_SIZE = 2*MAX_DIST/DISTANCE + 1;  //Hough grid size
   static const int ADDITION = RADIUS_SIZE/2;      //used to make radii positive
   
-  static const int MERGE_THETA = 20;
-  static const int MERGE_RADIUS = 3;
+  static const int NUM_PEAKS = 200;               //number of peaks used to make lines
+  static const int MERGE_THETA = 10;              //angular-distance between peaks belonging to the same line
+  static const int MERGE_RADIUS = 6;              //radial-distance between peaks belonging to the same line
+  static const int MIN_PEAKS = 5;                 //minimum number of peaks required for a line
   
   HoughTransform();
   ~HoughTransform();
   
   int getLines(std::vector<ArSensorReading> *readings, std::vector<struct houghLine> *lines);
-  
+  void clearHoughGrid();
   void sendHoughToImage(char* filename);
   
 private:
@@ -45,10 +48,12 @@ private:
   };
   
   float D_THETA;
+  float* COS_ARRAY;
+  float* SIN_ARRAY;
   unsigned char* houghGrid = nullptr;
   
   void performHoughTransform(std::vector<ArSensorReading> *readings);
-  void clearHoughGrid();
+  
   void getPeaks(int count, int* peaks);
 };
 
