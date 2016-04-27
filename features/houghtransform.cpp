@@ -4,11 +4,23 @@
 HoughTransform::HoughTransform(){
   this->houghGrid = new unsigned char[THETA_SIZE * RADIUS_SIZE]();
   D_THETA = 3.141592654 / THETA_SIZE;
+  
+  COS_ARRAY = new float[THETA_SIZE];
+  SIN_ARRAY = new float[THETA_SIZE];
+  
+  float theta = 0.0f;
+  for (int i=0; i<THETA_SIZE; i++){
+    COS_ARRAY[i] = cos(theta);
+    SIN_ARRAY[i] = sin(theta);
+    theta += D_THETA;
+  }
 }
 
 
 HoughTransform::~HoughTransform(){
   delete[] this->houghGrid;
+  delete[] this->COS_ARRAY;
+  delete[] this->SIN_ARRAY;
 }
 
 
@@ -24,53 +36,51 @@ void HoughTransform::clearHoughGrid(){
 
 int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector<struct houghLine> *lines){
   this->performHoughTransform(readings);
-  this->sendHoughToImage("/home/owner/Pictures/hough.pgm");
+//   this->sendHoughToImage("/home/owner/Pictures/hough.pgm");
   
-  int number = 100;
-  int *peaks = new int[number]();
-  getPeaks(number, peaks);
+  //get the 100 highest points in the hough transform
+  int* peaks = new int[NUM_PEAKS]();
+  getPeaks(NUM_PEAKS, peaks);
   
-  for (int i=0; i<number; i++){
-    std::cout << "Peak: " << peaks[i]/RADIUS_SIZE << " ";
-    std::cout << ((peaks[i]%RADIUS_SIZE)-ADDITION)*DISTANCE << " ";
-    std::cout << (int)houghGrid[peaks[i]] << std::endl;
-  }
+//   ////////////////
+//   for (int i=0; i<NUM_PEAKS; i++){
+//     std::cout << "Peak: " << peaks[i]/RADIUS_SIZE << " ";
+//     std::cout << ((peaks[i]%RADIUS_SIZE)-ADDITION)*DISTANCE << " ";
+//     std::cout << (int)houghGrid[peaks[i]] << std::endl;
+//   }
+//   ////////////////
   
-  struct peakGroup* grp = new struct peakGroup;
-  grp->maxRadius = peaks[0] % RADIUS_SIZE;
-  grp->maxTheta = peaks[0] / RADIUS_SIZE;
-  grp->weight = houghGrid[peaks[0]];
-  grp->numPoints = 1;
-  grp->minRadius = grp->maxRadius;
-  grp->minTheta = grp->maxTheta;
-  grp->radius = grp->minRadius * grp->weight;
-  grp->theta = grp->minTheta * grp->weight;
-  
+  //create new array to hold groups
   std::vector<struct peakGroup> groups;
-  groups.push_back(*grp);
   
   struct peakGroup *curGroup;
   int curRadius, curTheta, dTmax, dTmin, dRmax, dRmin, curWeight;
+  bool merged, tInside, rInside, inTheta, inRadius;
   
-  for (int i=1; i<number; i++){
+  //go through peaks and add all to groups
+  for (int i=0; i<NUM_PEAKS; i++){
+    //get the values for the current peak
     curRadius = peaks[i] % RADIUS_SIZE;
     curTheta = peaks[i] / RADIUS_SIZE;
     curWeight = houghGrid[peaks[i]];
-    bool merged = false;
+    if (curTheta == 0) continue;
+    merged = false;
     
+    //try to merge the peak with existing groups
     for (int j=0; j<groups.size(); j++){
       curGroup = &(groups[j]);
       dTmax = abs(curGroup->maxTheta - curTheta);
       dTmin = abs(curGroup->minTheta - curTheta);
       dRmax = abs(curGroup->maxRadius - curRadius);
       dRmin = abs(curGroup->minRadius - curRadius);
-      bool tInside = ((curTheta < curGroup->maxTheta) && (curTheta > curGroup->minTheta));
-      bool rInside = ((curRadius < curGroup->maxRadius) && (curRadius > curGroup->minRadius));
+      tInside = ((curTheta < curGroup->maxTheta) && (curTheta > curGroup->minTheta));
+      rInside = ((curRadius < curGroup->maxRadius) && (curRadius > curGroup->minRadius));
       
-      bool inTheta = (dTmax < MERGE_THETA) || (dTmin < MERGE_THETA) || tInside;
-      bool inRadius = (dRmax < MERGE_RADIUS) || (dRmin < MERGE_RADIUS) || rInside;
+      //true if the peak is close enough radius-wise or theta-wise
+      inTheta = (dTmax < MERGE_THETA) || (dTmin < MERGE_THETA) || tInside;
+      inRadius = (dRmax < MERGE_RADIUS) || (dRmin < MERGE_RADIUS) || rInside;
       
-      //merge lines
+      //merge the peak with the group if it fits
       if (inTheta && inRadius){
         curGroup->maxRadius = std::max(curRadius, curGroup->maxRadius);
         curGroup->minRadius = std::min(curRadius, curGroup->minRadius);
@@ -86,81 +96,103 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
       }
     }
     
-    //add new line
+    //add new group if we couldn't merge the peak
     if (!merged){
-      grp = new struct peakGroup;
-      grp->maxRadius = curRadius;
-      grp->maxTheta = curTheta;
-      grp->weight = curWeight;
-      grp->numPoints = 1;
-      grp->minRadius = grp->maxRadius;
-      grp->minTheta = grp->maxTheta;
-      grp->radius = grp->minRadius * grp->weight;
-      grp->theta = grp->minTheta * grp->weight;
-      groups.push_back(*grp);
+      struct peakGroup newGroup;
+      newGroup.maxRadius = curRadius;
+      newGroup.maxTheta = curTheta;
+      newGroup.weight = curWeight;
+      newGroup.numPoints = 1;
+      newGroup.minRadius = newGroup.maxRadius;
+      newGroup.minTheta = newGroup.maxTheta;
+      newGroup.radius = newGroup.minRadius * newGroup.weight;
+      newGroup.theta = newGroup.minTheta * newGroup.weight;
+      groups.push_back(newGroup);
     }
   }
   
-  //print groups
-  for (int i=0; i<groups.size(); i++){
-    curGroup = &(groups[i]);
-    
-    double t = curGroup->theta  / (double)curGroup->weight;
-    double r = curGroup->radius / (double)curGroup->weight;
-    r -= ADDITION;
-    r *= DISTANCE;
-    double w = curGroup->weight / (double)curGroup->numPoints;
-    
-    std::cout << "Group: " << t << " ";
-    std::cout << r << " ";
-    std::cout << w << std::endl;
-  }
+//   ////////////////
+//   //print groups
+//   for (int i=0; i<groups.size(); i++){
+//     curGroup = &(groups[i]);
+//     
+//     double t = curGroup->theta  / (double)curGroup->weight;
+//     double r = curGroup->radius / (double)curGroup->weight;
+//     r -= ADDITION;
+//     r *= DISTANCE;
+//     double w = curGroup->weight / (double)curGroup->numPoints;
+//     
+//     std::cout << "Group: " << t << " ";
+//     std::cout << r << " ";
+//     std::cout << w << " ";
+//     std::cout << curGroup->maxTheta << " ";
+//       std::cout << curGroup->minTheta << " ";
+//       std::cout << curGroup->maxRadius << " ";
+//       std::cout << curGroup->minRadius << std::endl;
+//   }
+//   ////////////////
   
-  //merge groups
+  //merge groups into lines
   std::vector<struct peakGroup> finalGrps;
-  finalGrps.push_back(groups[0]);
+  struct peakGroup* mergeGrp;
   
-  for (int i=1; i<groups.size(); i++){
-    grp = &(groups[i]);
-    double r = grp->radius / (double)grp->weight;
-    r -= ADDITION;
-    r *= DISTANCE;
-    if (r < 0){
-      grp->radius = 2*ADDITION*grp->weight - grp->radius;
-      grp->maxRadius = 2*ADDITION - grp->maxRadius;
-      grp->minRadius = 2*ADDITION - grp->minRadius;
-      grp->theta -= (THETA_SIZE * grp->weight);
-      grp->maxTheta -= THETA_SIZE;
-      grp->minTheta -= THETA_SIZE;
-    }
-    bool merged = false;
+  bool tMaxOverlap, tMinOverlap, rMaxOverlap, rMinOverlap;
+  
+  //go through groups and merge into final groups
+  for (int i=0; i<groups.size(); i++){
+    mergeGrp = &(groups[i]);
     
+    //make the group have a positive radius value
+    if (mergeGrp->radius < (ADDITION*mergeGrp->weight)){
+      mergeGrp->radius = 2*ADDITION*mergeGrp->weight - mergeGrp->radius;
+      mergeGrp->maxRadius = 2*ADDITION - mergeGrp->maxRadius;
+      mergeGrp->minRadius = 2*ADDITION - mergeGrp->minRadius;
+      mergeGrp->theta -= (THETA_SIZE * mergeGrp->weight);
+      mergeGrp->maxTheta -= THETA_SIZE;
+      mergeGrp->minTheta -= THETA_SIZE;
+    }
+    merged = false;
+    
+    //try to merge the group with the final groups
     for (int j=0; j<finalGrps.size(); j++){
       curGroup = &(finalGrps[j]);
-      dTmax = abs(curGroup->maxTheta - grp->minTheta);
-      dTmin = abs(curGroup->minTheta - grp->maxTheta);
-      dRmax = abs(curGroup->maxRadius - grp->minRadius);
-      dRmin = abs(curGroup->minRadius - grp->maxRadius);
+      dTmax = abs(curGroup->maxTheta - mergeGrp->minTheta);
+      dTmin = abs(curGroup->minTheta - mergeGrp->maxTheta);
+      dRmax = abs(curGroup->maxRadius - mergeGrp->minRadius);
+      dRmin = abs(curGroup->minRadius - mergeGrp->maxRadius);
       
-      bool tMaxOverlap = grp->maxTheta > curGroup->minTheta;
-      bool tMinOverlap = grp->minTheta < curGroup->maxTheta;
-      bool rMaxOverlap = grp->maxRadius > curGroup->minRadius;
-      bool rMinOverlap = grp->minRadius < curGroup->maxRadius;
+//       std::cout << curGroup->maxTheta << " ";
+//       std::cout << curGroup->minTheta << " ";
+//       std::cout << curGroup->maxRadius << " ";
+//       std::cout << curGroup->minRadius << " ";
+//       std::cout << mergeGrp->maxTheta << " ";
+//       std::cout << mergeGrp->minTheta << " ";
+//       std::cout << mergeGrp->maxRadius << " ";
+//       std::cout << mergeGrp->minRadius << " ";
+//       std::cout << dTmax << " " << dTmin << " " << dRmax << " " << dRmin << std::endl;
       
-      bool inTheta = (dTmax < MERGE_THETA) || (dTmin < MERGE_THETA) || (tMaxOverlap && tMinOverlap);
-      bool inRadius = (dRmax < MERGE_RADIUS) || (dRmin < MERGE_RADIUS) || (rMaxOverlap && rMinOverlap);
+      tMaxOverlap = mergeGrp->maxTheta > curGroup->minTheta;
+      tMinOverlap = mergeGrp->minTheta < curGroup->maxTheta;
+      rMaxOverlap = mergeGrp->maxRadius > curGroup->minRadius;
+      rMinOverlap = mergeGrp->minRadius < curGroup->maxRadius;
       
-      //merge groups
+      //true if group is close enough theta-wise or radius-wise
+      inTheta = (dTmax < MERGE_THETA) || (dTmin < MERGE_THETA) || (tMaxOverlap && tMinOverlap);
+      inRadius = (dRmax < MERGE_RADIUS) || (dRmin < MERGE_RADIUS) || (rMaxOverlap && rMinOverlap);
+      
+      //merge groups if close enough
       if (inTheta && inRadius){
-        curGroup->maxRadius = std::max(grp->maxRadius, curGroup->maxRadius);
-        curGroup->minRadius = std::min(grp->minRadius, curGroup->minRadius);
-        curGroup->maxTheta = std::max(grp->maxTheta, curGroup->maxTheta);
-        curGroup->minTheta = std::min(grp->minTheta, curGroup->minTheta);
+//         std::cout << "Merge: " << mergeGrp->theta/(double)mergeGrp->weight << " ";
+//         std::cout << curGroup->theta/(double)curGroup->weight << std::endl;
+        curGroup->maxRadius = std::max(mergeGrp->maxRadius, curGroup->maxRadius);
+        curGroup->minRadius = std::min(mergeGrp->minRadius, curGroup->minRadius);
+        curGroup->maxTheta = std::max(mergeGrp->maxTheta, curGroup->maxTheta);
+        curGroup->minTheta = std::min(mergeGrp->minTheta, curGroup->minTheta);
         
-        curGroup->radius += grp->radius;
-        curGroup->theta += grp->theta;
-        curGroup->weight += grp->weight;
-        curGroup->numPoints += grp->numPoints;
+        curGroup->radius += mergeGrp->radius;
+        curGroup->theta += mergeGrp->theta;
+        curGroup->weight += mergeGrp->weight;
+        curGroup->numPoints += mergeGrp->numPoints;
         merged = true;
         break;
       }
@@ -168,14 +200,17 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
     
     //add new line
     if (!merged){
-      finalGrps.push_back(*grp);
+//       std::cout << "Add: " << mergeGrp->theta/(double)mergeGrp->weight << std::endl;
+      finalGrps.push_back(*mergeGrp);
     }
   }
   
   
+  ////////////////
   //print final groups
   for (int i=0; i<finalGrps.size(); i++){
     curGroup = &(finalGrps[i]);
+    if (curGroup->numPoints < MIN_PEAKS) continue;
     
     double t = curGroup->theta  / (double)curGroup->weight;
     double r = curGroup->radius / (double)curGroup->weight;
@@ -185,7 +220,26 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
     
     std::cout << "Line: " << t << " ";
     std::cout << r << " ";
-    std::cout << w << std::endl;
+    std::cout << w << " ";
+    std::cout << curGroup->numPoints << std::endl;
+  }
+//   std::cout << std::endl;
+  ////////////////
+  
+  
+  //Turn groups into lines and push onto return vector
+  struct houghLine* curLine;
+  
+  for (int i=0; i<finalGrps.size(); i++){
+    curGroup = &(finalGrps[i]);
+    if (curGroup->numPoints < MIN_PEAKS) continue;
+    
+    curLine = new struct houghLine;
+    curLine->theta = curGroup->theta / (double)curGroup->weight;
+    curLine->radius = curGroup->radius / (double)curGroup->weight;
+    curLine->weight = curGroup->weight / (double)curGroup->numPoints;
+    
+//     lines->push_back(*curLine);
   }
   
   delete[] peaks;
@@ -194,21 +248,18 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
 
 void HoughTransform::performHoughTransform(std::vector<ArSensorReading> *readings){
   int radius;
-  float theta;
   double x, y;
   
   for (int i=0; i<readings->size(); i++){
     if ((*readings)[i].getRange() > MAX_DIST) continue; //check distance
     
-    theta = 0.0;
     for (int t=0; t<THETA_SIZE; t++){
       x = (*readings)[i].getLocalX();
       y = (*readings)[i].getLocalY();
-      radius = (int)round(x*cos(theta) + y*sin(theta));
+      radius = (int)round(x*COS_ARRAY[t] + y*SIN_ARRAY[t]);
       radius /= DISTANCE;
       radius += ADDITION;
       this->houghGrid[t*RADIUS_SIZE + radius]++;
-      theta += D_THETA;
     }
   }
 }
