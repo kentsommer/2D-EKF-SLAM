@@ -20,9 +20,8 @@ typedef struct State_Covariance {
 */
 
 int knownFeatureNumber;
-Eigen::MatrixXd P (10,10);
-Eigen::VectorXd x_hat (10);
-void addFeature(double F_X_m,double F_Y_m,Eigen::MatrixXd R) {
+
+Eigen::MatrixXd addFeature(Eigen::VectorXd x_hat, Eigen::MatrixXd P,double F_X_m,double F_Y_m,Eigen::MatrixXd R) {
 	
 	double xhat=x_hat(0);
 	double yhat=x_hat(1);
@@ -39,7 +38,7 @@ void addFeature(double F_X_m,double F_Y_m,Eigen::MatrixXd R) {
   	Eigen::MatrixXd Hli(2,2);
   	Eigen::MatrixXd Prr(3,3);
 	  Prr=P.block<3,3>(0,0);
-	  Prr << 1,1,1,1,1,1,1,1,1;
+	  
   	Hr<<-(2*fxhat - 2*xhat)/(2*sqrt(((fxhat - xhat)*(fxhat - xhat) + (fyhat - yhat)*(fyhat - yhat)))),-(2*fyhat - 2*yhat)/(2*sqrt(((fxhat - xhat)*(fxhat - xhat) + (fyhat - yhat)*(fyhat - yhat)))),0,
      (fyhat - yhat)/((fxhat - xhat)*(fxhat - xhat) + (fyhat - yhat)*(fyhat - yhat)),-(fxhat - xhat)/((fxhat - xhat)*(fxhat - xhat) + (fyhat - yhat)*(fyhat - yhat)),-1;
   
@@ -68,8 +67,17 @@ void addFeature(double F_X_m,double F_Y_m,Eigen::MatrixXd R) {
 	  }//for
   }//if
   //Prli=-Prr*Hr.transpose()*Hli;
-  knownFeatureNumber=knownFeatureNumber+1;
   
+  	Eigen::MatrixXd Set (x_hat.size(),x_hat.size()+1);
+	Set.block(0,0,x_hat.size(),1) = x_hat;
+	Set.block(0,1,x_hat.size(),x_hat.size()) = P;
+	
+	knownFeatureNumber=knownFeatureNumber+1;
+	return Set;
+	
+	
+	
+	
   std::cout << "knownFeatureNumber=" << std::endl;
   std::cout << knownFeatureNumber << std::endl;
   std::cout << "Hli=" << std::endl;
@@ -89,8 +97,10 @@ void addFeature(double F_X_m,double F_Y_m,Eigen::MatrixXd R) {
 
 int main(){//testing add feature
 	double pi=3.1415926;
-	
+	Eigen::MatrixXd P (10,10);
+	Eigen::VectorXd x_hat (10);
 	x_hat << 1,2,0,0,0,0,0,0,0,0;
+	Eigen::MatrixXd Set;
 		
 	P.block<3,3>(0,0)=Eigen::MatrixXd::Ones(3,3);
 	double F_X_m=2;
@@ -98,10 +108,10 @@ int main(){//testing add feature
 	knownFeatureNumber=0;
 	Eigen::MatrixXd R(2,2);
 	R << .1*.1,0,0,.1*.1;
-	addFeature(x_hat, F_X_m, F_Y_m, R);
+	Set=addFeature(x_hat,P, F_X_m, F_Y_m, R);
 	std::cout << ("knownFeatureNumber=") << std::endl;	
 	std::cout << knownFeatureNumber << std::endl;
-	addFeature(x_hat, -1, -1, R);
+	addFeature(x_hat, P, -1, -1, R);
 
 	
 }
