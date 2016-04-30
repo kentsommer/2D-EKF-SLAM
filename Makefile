@@ -10,7 +10,7 @@ MAININ = wander.cpp
 ODOMIN = odometry/kalmanfilter.cpp odometry/Propagate.cpp
 MOVEIN = movement/movementcontroller.cpp
 SICKIN = sick/sickReadings.cpp
-FEATIN = features/houghtransform.cpp
+FEATIN = features/houghtransform.cpp features/featuredetector.cpp
 
 all: wander
 

@@ -17,11 +17,13 @@ HoughTransform::HoughTransform(){
 }
 
 
+
 HoughTransform::~HoughTransform(){
   delete[] this->houghGrid;
   delete[] this->COS_ARRAY;
   delete[] this->SIN_ARRAY;
 }
+
 
 
 void HoughTransform::clearHoughGrid(){
@@ -38,8 +40,8 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
   this->performHoughTransform(readings);
 //   this->sendHoughToImage("/home/owner/Pictures/hough.pgm");
   
-  //get the 100 highest points in the hough transform
-  int* peaks = new int[NUM_PEAKS]();
+  //get the NUM_PEAKS highest points in the hough transform
+  int peaks [NUM_PEAKS] = {0};
   getPeaks(NUM_PEAKS, peaks);
   
 //   ////////////////
@@ -56,18 +58,19 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
   struct peakGroup *curGroup;
   int curRadius, curTheta, dTmax, dTmin, dRmax, dRmin, curWeight;
   bool merged, tInside, rInside, inTheta, inRadius;
+  int i, j;
   
   //go through peaks and add all to groups
-  for (int i=0; i<NUM_PEAKS; i++){
+  for (i=0; i<NUM_PEAKS; i++){
     //get the values for the current peak
     curRadius = peaks[i] % RADIUS_SIZE;
     curTheta = peaks[i] / RADIUS_SIZE;
     curWeight = houghGrid[peaks[i]];
-    if (curTheta == 0) continue;
+    if (curRadius <= 0) continue;
     merged = false;
     
     //try to merge the peak with existing groups
-    for (int j=0; j<groups.size(); j++){
+    for (j=0; j<groups.size(); j++){
       curGroup = &(groups[j]);
       dTmax = abs(curGroup->maxTheta - curTheta);
       dTmin = abs(curGroup->minTheta - curTheta);
@@ -111,6 +114,23 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
     }
   }
   
+
+  int size = groups.size();
+  
+  //make all groups have positive radii
+  for (i=0; i<size; i++){
+    curGroup = &(groups[i]);
+    
+    if (curGroup->radius < (ADDITION*curGroup->weight)){
+      curGroup->radius = 2*ADDITION*curGroup->weight - curGroup->radius;
+      curGroup->maxRadius = 2*ADDITION - curGroup->maxRadius;
+      curGroup->minRadius = 2*ADDITION - curGroup->minRadius;
+      curGroup->theta -= (THETA_SIZE * curGroup->weight);
+      curGroup->maxTheta -= THETA_SIZE;
+      curGroup->minTheta -= THETA_SIZE;
+    }
+  }
+  
 //   ////////////////
 //   //print groups
 //   for (int i=0; i<groups.size(); i++){
@@ -131,45 +151,25 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
 //       std::cout << curGroup->minRadius << std::endl;
 //   }
 //   ////////////////
+
   
   //merge groups into lines
-  std::vector<struct peakGroup> finalGrps;
   struct peakGroup* mergeGrp;
+  char mergeMatrix [size];
+  for (i=0; i<size; i++) mergeMatrix[i] = -1;
   
   bool tMaxOverlap, tMinOverlap, rMaxOverlap, rMinOverlap;
   
-  //go through groups and merge into final groups
-  for (int i=0; i<groups.size(); i++){
+  //see which groups need to be merged
+  for (i=0; i<size; i++){
     mergeGrp = &(groups[i]);
-    
-    //make the group have a positive radius value
-    if (mergeGrp->radius < (ADDITION*mergeGrp->weight)){
-      mergeGrp->radius = 2*ADDITION*mergeGrp->weight - mergeGrp->radius;
-      mergeGrp->maxRadius = 2*ADDITION - mergeGrp->maxRadius;
-      mergeGrp->minRadius = 2*ADDITION - mergeGrp->minRadius;
-      mergeGrp->theta -= (THETA_SIZE * mergeGrp->weight);
-      mergeGrp->maxTheta -= THETA_SIZE;
-      mergeGrp->minTheta -= THETA_SIZE;
-    }
-    merged = false;
-    
-    //try to merge the group with the final groups
-    for (int j=0; j<finalGrps.size(); j++){
-      curGroup = &(finalGrps[j]);
+    for (j=i+1; j<size; j++){
+      curGroup = &(groups[j]);
+      
       dTmax = abs(curGroup->maxTheta - mergeGrp->minTheta);
       dTmin = abs(curGroup->minTheta - mergeGrp->maxTheta);
       dRmax = abs(curGroup->maxRadius - mergeGrp->minRadius);
       dRmin = abs(curGroup->minRadius - mergeGrp->maxRadius);
-      
-//       std::cout << curGroup->maxTheta << " ";
-//       std::cout << curGroup->minTheta << " ";
-//       std::cout << curGroup->maxRadius << " ";
-//       std::cout << curGroup->minRadius << " ";
-//       std::cout << mergeGrp->maxTheta << " ";
-//       std::cout << mergeGrp->minTheta << " ";
-//       std::cout << mergeGrp->maxRadius << " ";
-//       std::cout << mergeGrp->minRadius << " ";
-//       std::cout << dTmax << " " << dTmin << " " << dRmax << " " << dRmin << std::endl;
       
       tMaxOverlap = mergeGrp->maxTheta > curGroup->minTheta;
       tMinOverlap = mergeGrp->minTheta < curGroup->maxTheta;
@@ -182,68 +182,58 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
       
       //merge groups if close enough
       if (inTheta && inRadius){
-//         std::cout << "Merge: " << mergeGrp->theta/(double)mergeGrp->weight << " ";
-//         std::cout << curGroup->theta/(double)curGroup->weight << std::endl;
-        curGroup->maxRadius = std::max(mergeGrp->maxRadius, curGroup->maxRadius);
-        curGroup->minRadius = std::min(mergeGrp->minRadius, curGroup->minRadius);
-        curGroup->maxTheta = std::max(mergeGrp->maxTheta, curGroup->maxTheta);
-        curGroup->minTheta = std::min(mergeGrp->minTheta, curGroup->minTheta);
-        
-        curGroup->radius += mergeGrp->radius;
-        curGroup->theta += mergeGrp->theta;
-        curGroup->weight += mergeGrp->weight;
-        curGroup->numPoints += mergeGrp->numPoints;
-        merged = true;
-        break;
+        mergeMatrix[j] = i;
       }
     }
-    
-    //add new line
-    if (!merged){
-//       std::cout << "Add: " << mergeGrp->theta/(double)mergeGrp->weight << std::endl;
-      finalGrps.push_back(*mergeGrp);
-    }
   }
   
   
-  ////////////////
-  //print final groups
-  for (int i=0; i<finalGrps.size(); i++){
-    curGroup = &(finalGrps[i]);
+  //merge groups
+  for (i=0; i<size; i++){
+    if (mergeMatrix[i] == -1) continue;
+    
+    j = i;
+    while (mergeMatrix[j] != -1) j = mergeMatrix[j];
+    
+    mergeGrp = &(groups[i]);
+    curGroup = &(groups[j]);
+    
+    curGroup->maxRadius = std::max(mergeGrp->maxRadius, curGroup->maxRadius);
+    curGroup->minRadius = std::min(mergeGrp->minRadius, curGroup->minRadius);
+    curGroup->maxTheta = std::max(mergeGrp->maxTheta, curGroup->maxTheta);
+    curGroup->minTheta = std::min(mergeGrp->minTheta, curGroup->minTheta);
+    
+    curGroup->radius += mergeGrp->radius;
+    curGroup->theta += mergeGrp->theta;
+    curGroup->weight += mergeGrp->weight;
+    curGroup->numPoints += mergeGrp->numPoints;
+  }
+  
+  
+  //turn groups to lines and return
+  for (i=0; i<size; i++){
+    if (mergeMatrix[i] != -1) continue;
+    
+    curGroup = &(groups[i]);
     if (curGroup->numPoints < MIN_PEAKS) continue;
     
-    double t = curGroup->theta  / (double)curGroup->weight;
-    double r = curGroup->radius / (double)curGroup->weight;
-    r -= ADDITION;
-    r *= DISTANCE;
-    double w = curGroup->weight / (double)curGroup->numPoints;
+    struct houghLine curLine;
+    curLine.theta = curGroup->theta / (double)curGroup->weight;
+    curLine.theta *= 3.141592654 / THETA_SIZE;
+    curLine.radius = curGroup->radius / (double)curGroup->weight;
+    curLine.radius -= ADDITION;
+    curLine.radius *= DISTANCE;
+    curLine.weight = curGroup->weight / (double)curGroup->numPoints;
     
-    std::cout << "Line: " << t << " ";
-    std::cout << r << " ";
-    std::cout << w << " ";
-    std::cout << curGroup->numPoints << std::endl;
+//     std::cout << "Lines: " << curLine.theta * 180.0/3.141592654 << " ";
+//     std::cout << curLine.radius << " ";
+//     std::cout << curLine.weight << " ";
+//     std::cout << curGroup->numPoints << std::endl;
+    
+    lines->push_back(curLine);
   }
-//   std::cout << std::endl;
-  ////////////////
-  
-  
-  //Turn groups into lines and push onto return vector
-  struct houghLine* curLine;
-  
-  for (int i=0; i<finalGrps.size(); i++){
-    curGroup = &(finalGrps[i]);
-    if (curGroup->numPoints < MIN_PEAKS) continue;
-    
-    curLine = new struct houghLine;
-    curLine->theta = curGroup->theta / (double)curGroup->weight;
-    curLine->radius = curGroup->radius / (double)curGroup->weight;
-    curLine->weight = curGroup->weight / (double)curGroup->numPoints;
-    
-//     lines->push_back(*curLine);
-  }
-  
-  delete[] peaks;
 }
+
 
 
 void HoughTransform::performHoughTransform(std::vector<ArSensorReading> *readings){
@@ -265,10 +255,11 @@ void HoughTransform::performHoughTransform(std::vector<ArSensorReading> *reading
 }
 
 
-void HoughTransform::getPeaks(int count, int *peaks){
+
+void HoughTransform::getPeaks(int count, int peaks[]){
   int mindex = 0;
   int curVal;
-  
+    
   for (int t=0; t<THETA_SIZE; t++){
     for (int r=0; r<RADIUS_SIZE; r++){
       //get current value
@@ -297,7 +288,7 @@ void HoughTransform::sendHoughToImage(char* filename){
   }
   
   char header[128];
-  std::sprintf(header, "P5\n%6d %6d\n255\n", RADIUS_SIZE, THETA_SIZE);
+  std::sprintf(header, "P5\n%6d %6d\n100\n", RADIUS_SIZE, THETA_SIZE);
 //   std::sprintf(header, "P5\n%6d %6d\n128\n", THETA_SIZE, RADIUS_SIZE);
   std::fputs(header, pgmFile);
   

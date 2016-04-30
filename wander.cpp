@@ -31,6 +31,7 @@ Adept MobileRobots, 10 Columbia Drive, Amherst, NH 03031; +1-603-881-7960
 #include "Aria.h"
 #include "odometry/kalmanfilter.h"
 #include "movement/movementcontroller.h"
+#include "features/featuredetector.h"
 #include "features/houghtransform.h"
 
 
@@ -144,23 +145,38 @@ int main(int argc, char **argv)
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
   
-/*  
+  /*
   robot.lock();
-  robot.setVel2(200, 150);
+  robot.setVel2(200, 200);
   robot.unlock();
   //*/
-
+  
+  FeatureDetector* f = new FeatureDetector(&sick);
+  
   while (1){
     sick.lockDevice();
     std::vector<ArSensorReading> *readings = sick.getRawReadingsAsVector();
+    std::vector<struct houghLine> lines;
     sick.unlockDevice();
-    HoughTransform* h = new HoughTransform();
+//     HoughTransform* h = new HoughTransform();
+    std::vector<Feature> fvec;
     
     if (readings->size() > 0){
-      h->getLines(readings, nullptr);
-      h->clearHoughGrid();
+//       h->getLines(readings, &lines);
+//       h->clearHoughGrid();
+//       std::cout << "Start...\n";
+      std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
+      f->getFeatures(&fvec, nullptr);
+      std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
+      for (int i=0; i<fvec.size(); i++){
+        std::cout << fvec[i].x << " ";
+        std::cout << fvec[i].y << " ";
+      }
+      long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t22 - t11).count();
+      std::cout << microseconds << std::endl;
 //       std::cout << "Done!\n";
-      sleep(1);
+
+      sleep(0.5);
     }
   }
   return 0;
