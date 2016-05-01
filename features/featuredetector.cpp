@@ -13,15 +13,16 @@ FeatureDetector::~FeatureDetector(){
 
 int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCompass){
   sick->lockDevice();
-    std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
+    std::vector<ArSensorReading> *r = sick->getRawReadingsAsVector();
+    std::vector<ArSensorReading> readings(*r);
   sick->unlockDevice();
   
   std::vector<struct houghLine> houghLines;
-  this->hough->getLines(readings, &houghLines);
+  this->hough->getLines(&readings, &houghLines);
   this->hough->clearHoughGrid();
   
   std::vector<struct lineSegment> lineSegments;
-  this->fitLineSegments(readings, &houghLines, &lineSegments);
+  this->fitLineSegments(&readings, &houghLines, &lineSegments);
   
 //   for (int i=0; i<lineSegments.size(); i++){
 //     std::cout << "Segment: ";

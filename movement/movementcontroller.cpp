@@ -3,6 +3,9 @@
 
 #define PI 3.14159265
 
+std::vector<ArSensorReading> *rReal;
+std::vector<ArSensorReading> readings;
+
 MovementController::MovementController(ArRobot* robot, ArSick* sick){
   this->robot = robot;
   this->laserScanner = sick;
@@ -34,6 +37,11 @@ void* move_control(void* args){
   info->robot->unlock();
 
   while(1){
+    info->sick->lockDevice();
+    rReal = info->sick->getRawReadingsAsVector();
+    std::vector<ArSensorReading>  temp(*rReal);
+    readings = temp;
+    info->sick->unlockDevice();
     if(shouldTurnLeft(info->sick)){
       info->robot->lock();
       info->robot->setVel(300);
@@ -46,6 +54,9 @@ void* move_control(void* args){
       stop(info->robot);
     }
     else{
+      info->robot->lock();
+      info->robot->setVel(300);
+      info->robot->unlock();
       //move_forward(info->robot);
     }
     alignToWall(info->robot, info->sick);
@@ -89,40 +100,27 @@ void stop(ArRobot* robot){
   robot->unlock();
 }
 
-double getClosestReading(ArSick* sick){
-  sick->lockDevice();
-    // There is a utility to find the closest reading wthin a range of degrees around the sick, here we use this sick's full field of view (start to end)
-    // If there are no valid closest readings within the given range, dist will be greater than sick->getMaxRange().
-    double angle = 0;
-    double dist = sick->currentReadingPolar(sick->getStartDegrees(), sick->getEndDegrees(), &angle);
-
-    std::cout << "Closest reading is at " << angle << " degrees and is " << dist/1000.0 << " meters away.\n";
-
-  sick->unlockDevice();
-  return dist;
-}
-
 
 bool shouldStop(ArSick* sick){
   float distToFrontWallLeft = 0;
   float distToFrontWallRight = 0;
   bool shouldTurn = false;
-  sick->lockDevice();
-  std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
-  sick->unlockDevice();
+/*  sick->lockDevice();
+  std::vector<ArSensorReading> readings = sick->getRawReadingsAsVector();
+  sick->unlockDevice();*/
 
-  if(readings->size() == 0){ return false; }
+  if(readings.size() == 0){ return false; }
   
   //Sample every 2nd reading from 80 + 
   for(int i=0;i<=10;i=i+2){
-    if(readings->size() != 0){
-      distToFrontWallLeft += fabs(((*readings)[80+i].getRange())*sin((80+i)*PI/180));
+    if(readings.size() != 0){
+      distToFrontWallLeft += fabs(((readings)[80+i].getRange())*sin((80+i)*PI/180));
     }
   }
 
   for(int i=0;i<=10;i=i+2){
-    if(readings->size() != 0){
-      distToFrontWallRight += fabs(((*readings)[90+i].getRange())*sin((90+i)*PI/180));
+    if(readings.size() != 0){
+      distToFrontWallRight += fabs(((readings)[90+i].getRange())*sin((90+i)*PI/180));
     }
   }
   distToFrontWallLeft/=5; // Average the distnace
@@ -135,19 +133,19 @@ bool shouldStop(ArSick* sick){
 
 bool shouldTurnLeft(ArSick* sick){
   float distToLeftWall = 0;
-  float threshDistToLeftWall = 1200;
+  float threshDistToLeftWall = 1300;
   bool shouldTurn = false;
-  sick->lockDevice();
-  std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
-  sick->unlockDevice();
+/*  sick->lockDevice();
+  std::vector<ArSensorReading> readings = sick->getRawReadingsAsVector();
+  sick->unlockDevice();*/
 
-  if(readings->size() == 0){ return false; }
+  if(readings.size() == 0){ return false; }
   int count = 0;
-  for (double theta=0.0;theta<40.0; theta+=10.0){
-    if(readings->size() != 0){
-        for (int i=0;i<10; i++){
+  for (double theta=0.0;theta<40.0; theta+=5.0){
+    if(readings.size() != 0){
+        for (int i=0;i<5; i++){
           count = count + 1;
-          distToLeftWall += fabs(((*readings)[theta+i].getRange())*sin((theta+i)*PI/180));
+          distToLeftWall += fabs(((readings)[theta+i].getRange())*sin((theta+i)*PI/180));
         }
     }
   }
@@ -175,10 +173,10 @@ void makeLeftTurn(ArRobot* robot, ArSick* sick)
 
 
 bool canAlignRight(ArSick* sick){
-  sick->lockDevice();
-  std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
-  sick->unlockDevice();
-  if(readings->size() != 0){
+/*  sick->lockDevice();
+  std::vector<ArSensorReading> readings = sick->getRawReadingsAsVector();
+  sick->unlockDevice();*/
+  if(readings.size() != 0){
     // if the standard deviation of the slopes is very small then they are same line (wall)
     // Can use to align
     float slope1 = getSlope(160, 170, readings);
@@ -196,10 +194,10 @@ bool canAlignRight(ArSick* sick){
 
 
 bool canAlignLeft(ArSick* sick){
-  sick->lockDevice();
-  std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
-  sick->unlockDevice();
-  if(readings->size() != 0){
+/*  sick->lockDevice();
+  std::vector<ArSensorReading> readings = sick->getRawReadingsAsVector();
+  sick->unlockDevice();*/
+  if(readings.size() != 0){
     // if the standard deviation of the slopes is very small then they are same line (wall)
     // Can use to align
     float slope1 = getSlope(20, 10, readings);
@@ -217,15 +215,15 @@ bool canAlignLeft(ArSick* sick){
 
 
 void alignToWall(ArRobot* robot, ArSick* sick){
-  sick->lockDevice();
-  std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
-  sick->unlockDevice();
+/*  sick->lockDevice();
+  std::vector<ArSensorReading> readings = sick->getRawReadingsAsVector();
+  sick->unlockDevice();*/
 
-  float wallDistThresh = 600;
+  float wallDistThresh = 1400;
   float correctionAngle = 0;
   
-  if (canAlignRight(sick) && canAlignLeft(sick) && readings->size() != 0){
-    std::cout << "Aligning to Both Lines" << "\n";
+  if (canAlignRight(sick) && canAlignLeft(sick) && readings.size() != 0){
+    //std::cout << "Aligning to Both Lines" << "\n";
     float rightSlope = getSlope(155, 170, readings);
     float leftSlope = getSlope(25, 10, readings);
     float thRight = getTheta(rightSlope);
@@ -238,18 +236,23 @@ void alignToWall(ArRobot* robot, ArSick* sick){
     float theta = (thLeft+thRight)/2;
     correctionAngle = getCorrectionAngleCombined(theta, distToRightWall, distToLeftWall);
 
+    //std::cout << "dist to left is: " << distToLeftWall << "\n";
+    //std::cout << "dist to right is: " << distToRightWall << "\n";
     if(distToRightWall > distToLeftWall){
-      robot->setDeltaHeading(correctionAngle-10);
+      //robot->setDeltaHeading(correctionAngle-5);
+      robot->setRotVel(-5.0);
     }
     if(distToLeftWall > distToRightWall){
-      robot->setDeltaHeading(correctionAngle+10);
+      //robot->setDeltaHeading(correctionAngle+5);
+      robot->setRotVel(5.0);
     }
     else{
       robot->setDeltaHeading(correctionAngle);
+      //robot->setRotVel(0);
     }
   }
-  else if (canAlignRight(sick) && readings->size() != 0){
-    std::cout << "Aligning to Right Line" << "\n";
+  else if (canAlignRight(sick) && readings.size() != 0){
+    //std::cout << "Aligning to Right Line" << "\n";
     float rightSlope = getSlope(155, 170, readings);
     float thRight = getTheta(rightSlope);
     float distToRightWall = 0.0;
@@ -257,15 +260,21 @@ void alignToWall(ArRobot* robot, ArSick* sick){
       distToRightWall += getDistance(155, 25, thRight, i, readings)/15.0;
     }
     correctionAngle = getCorrectionAngle(thRight, distToRightWall);
+
+    //std::cout << "dist to right is: " << distToRightWall << "\n";
     if(distToRightWall < wallDistThresh){
-      robot->setDeltaHeading(correctionAngle+10); 
+      //robot->setDeltaHeading(correctionAngle+10); 
+      robot->setRotVel(5.0);
+    }
+    else if(distToRightWall > wallDistThresh + 100){
+      robot->setRotVel(-5.0);
     }
     else{
       robot->setDeltaHeading(correctionAngle);
     }  
   }
-  else if (canAlignLeft(sick) && readings->size() != 0){
-    std::cout << "Aligning to Left Line" << "\n";
+  else if (canAlignLeft(sick) && readings.size() != 0){
+    //std::cout << "Aligning to Left Line" << "\n";
     float leftSlope = getSlope(25, 10, readings);
     float thLeft = getTheta(leftSlope);
     float distToLeftWall = 0.0;
@@ -273,8 +282,14 @@ void alignToWall(ArRobot* robot, ArSick* sick){
       distToLeftWall += getDistance(25, 25, thLeft, i, readings)/15.0;
     }
     correctionAngle = getCorrectionAngle(thLeft, distToLeftWall);
+
+    //std::cout << "dist to left is: " << distToLeftWall << "\n";
     if(distToLeftWall < wallDistThresh){
-      robot->setDeltaHeading(correctionAngle-10); 
+      //robot->setDeltaHeading(correctionAngle-10);
+      robot->setRotVel(-5.0); 
+    }
+    else if(distToLeftWall > wallDistThresh + 100){
+      robot->setRotVel(5.0);
     }
     else{
       robot->setDeltaHeading(correctionAngle);
@@ -284,12 +299,12 @@ void alignToWall(ArRobot* robot, ArSick* sick){
 
 
 //Helper functions for Alignment
-float getSlope(float angle1, float angle2, std::vector<ArSensorReading> *readings){
-  return ((*readings)[angle1].getLocalY() - (*readings)[angle2].getLocalY())/((*readings)[angle1].getLocalX() - (*readings)[angle2].getLocalX());
+float getSlope(float angle1, float angle2, std::vector<ArSensorReading> readings){
+  return ((readings)[angle1].getLocalY() - (readings)[angle2].getLocalY())/((readings)[angle1].getLocalX() - (readings)[angle2].getLocalX());
 }
 
-float getDistance(float angle1, float angle2, float theta, int indc, std::vector<ArSensorReading> *readings){
-  return ((*readings)[angle1+indc].getRange())*cos((angle2-theta-indc)*PI/180);
+float getDistance(float angle1, float angle2, float theta, int indc, std::vector<ArSensorReading> readings){
+  return ((readings)[angle1+indc].getRange())*cos((angle2-theta-indc)*PI/180);
 }
 
 float getCorrectionAngleCombined(float theta, float distRW, float distLW){
