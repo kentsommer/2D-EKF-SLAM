@@ -133,6 +133,9 @@ Eigen::MatrixXd Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::
 			
 		}
 		
+
+		
+
 		
 		if(Opt_i == 0 || Mahal_dist > Gamma_max)
 		{
@@ -143,6 +146,16 @@ Eigen::MatrixXd Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::
 		}
 		else if(Mahal_dist < Gamma_min)
 		{
+			//Calculating condition number
+			Eigen::JacobiSVD<Eigen::MatrixXd> svd(inv_S);
+			double cond = svd.singularValues()(0) / svd.singularValues()(svd.singularValues().size()-1);
+			
+			if(cond >= 80)
+			{
+				printf("%d: Bad measurement covariance\n", j);
+				continue;
+			}
+	
 			printf("%d: Update\n", j);
 			res = Opt_res;
 			I = Eigen::MatrixXd::Identity(x_hat_min.size(),x_hat_min.size());
