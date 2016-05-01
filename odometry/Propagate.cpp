@@ -32,7 +32,7 @@ Eigen::MatrixXd KalmanFilter::Propagate(Eigen::VectorXd x_hat_plus, Eigen::Matri
 	Eigen::MatrixXd Phi_R(3,3);
 	Eigen::MatrixXd G(3,2);
 	
-
+	Eigen::MatrixXd tempTrans;
 	
 	//Propagate state (Robot and Landmark, no change in Landmark)
 	x_hat_min.head(3) << v_m*cos(ori),
@@ -67,8 +67,8 @@ Eigen::MatrixXd KalmanFilter::Propagate(Eigen::VectorXd x_hat_plus, Eigen::Matri
 	P_min.block(3,3,n-3,n-3) = P_plus.block(3,3,n-3, n-3);
 
 	// Make sure the matrix is symmetric, may skip this option
-	P_min = (P_min + P_min.transpose()) * 0.5;
-		
+	tempTrans = 0.5(P_min + P_min.transpose());
+	P_min = tempTrans;	
 
 	// Put State vector and Covariance into one matrix and return it.
 	// We can parse these out in the main function.
