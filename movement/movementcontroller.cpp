@@ -46,6 +46,9 @@ void* move_control(void* args){
       stop(info->robot);
     }
     else{
+      info->robot->lock();
+      info->robot->setVel(300);
+      info->robot->unlock();
       //move_forward(info->robot);
     }
     alignToWall(info->robot, info->sick);
@@ -135,7 +138,7 @@ bool shouldStop(ArSick* sick){
 
 bool shouldTurnLeft(ArSick* sick){
   float distToLeftWall = 0;
-  float threshDistToLeftWall = 1200;
+  float threshDistToLeftWall = 1300;
   bool shouldTurn = false;
   sick->lockDevice();
   std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
@@ -143,9 +146,9 @@ bool shouldTurnLeft(ArSick* sick){
 
   if(readings->size() == 0){ return false; }
   int count = 0;
-  for (double theta=0.0;theta<40.0; theta+=10.0){
+  for (double theta=0.0;theta<40.0; theta+=5.0){
     if(readings->size() != 0){
-        for (int i=0;i<10; i++){
+        for (int i=0;i<5; i++){
           count = count + 1;
           distToLeftWall += fabs(((*readings)[theta+i].getRange())*sin((theta+i)*PI/180));
         }
@@ -221,11 +224,11 @@ void alignToWall(ArRobot* robot, ArSick* sick){
   std::vector<ArSensorReading> *readings = sick->getRawReadingsAsVector();
   sick->unlockDevice();
 
-  float wallDistThresh = 600;
+  float wallDistThresh = 1500;
   float correctionAngle = 0;
   
   if (canAlignRight(sick) && canAlignLeft(sick) && readings->size() != 0){
-    std::cout << "Aligning to Both Lines" << "\n";
+    //std::cout << "Aligning to Both Lines" << "\n";
     float rightSlope = getSlope(155, 170, readings);
     float leftSlope = getSlope(25, 10, readings);
     float thRight = getTheta(rightSlope);
@@ -238,18 +241,23 @@ void alignToWall(ArRobot* robot, ArSick* sick){
     float theta = (thLeft+thRight)/2;
     correctionAngle = getCorrectionAngleCombined(theta, distToRightWall, distToLeftWall);
 
+    std::cout << "dist to left is: " << distToLeftWall << "\n";
+    std::cout << "dist to right is: " << distToRightWall << "\n";
     if(distToRightWall > distToLeftWall){
-      robot->setDeltaHeading(correctionAngle-10);
+      //robot->setDeltaHeading(correctionAngle-5);
+      robot->setRotVel(-5.0);
     }
     if(distToLeftWall > distToRightWall){
-      robot->setDeltaHeading(correctionAngle+10);
+      //robot->setDeltaHeading(correctionAngle+5);
+      robot->setRotVel(5.0);
     }
     else{
       robot->setDeltaHeading(correctionAngle);
+      //robot->setRotVel(0);
     }
   }
   else if (canAlignRight(sick) && readings->size() != 0){
-    std::cout << "Aligning to Right Line" << "\n";
+    //std::cout << "Aligning to Right Line" << "\n";
     float rightSlope = getSlope(155, 170, readings);
     float thRight = getTheta(rightSlope);
     float distToRightWall = 0.0;
@@ -257,15 +265,21 @@ void alignToWall(ArRobot* robot, ArSick* sick){
       distToRightWall += getDistance(155, 25, thRight, i, readings)/15.0;
     }
     correctionAngle = getCorrectionAngle(thRight, distToRightWall);
+
+    std::cout << "dist to right is: " << distToRightWall << "\n";
     if(distToRightWall < wallDistThresh){
-      robot->setDeltaHeading(correctionAngle+10); 
+      //robot->setDeltaHeading(correctionAngle+10); 
+      robot->setRotVel(5.0);
+    }
+    else if(distToRightWall > wallDistThresh + 100){
+      robot->setRotVel(-5.0);
     }
     else{
       robot->setDeltaHeading(correctionAngle);
     }  
   }
   else if (canAlignLeft(sick) && readings->size() != 0){
-    std::cout << "Aligning to Left Line" << "\n";
+    //std::cout << "Aligning to Left Line" << "\n";
     float leftSlope = getSlope(25, 10, readings);
     float thLeft = getTheta(leftSlope);
     float distToLeftWall = 0.0;
@@ -273,8 +287,14 @@ void alignToWall(ArRobot* robot, ArSick* sick){
       distToLeftWall += getDistance(25, 25, thLeft, i, readings)/15.0;
     }
     correctionAngle = getCorrectionAngle(thLeft, distToLeftWall);
+
+    std::cout << "dist to left is: " << distToLeftWall << "\n";
     if(distToLeftWall < wallDistThresh){
-      robot->setDeltaHeading(correctionAngle-10); 
+      //robot->setDeltaHeading(correctionAngle-10);
+      robot->setRotVel(-5.0); 
+    }
+    else if(distToLeftWall > wallDistThresh + 100){
+      robot->setRotVel(5.0);
     }
     else{
       robot->setDeltaHeading(correctionAngle);
