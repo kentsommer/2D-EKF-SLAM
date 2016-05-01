@@ -23,7 +23,7 @@ public:
   static const int RADIUS_SIZE = 2*MAX_DIST/DISTANCE + 1;  //Hough grid size
   static const int ADDITION = RADIUS_SIZE/2;      //used to make radii positive
   
-  static const int NUM_PEAKS = 200;               //number of peaks used to make lines
+  static const int NUM_PEAKS = 85;               //number of peaks used to make lines
   static const int MERGE_THETA = 30;              //angular-distance between peaks belonging to the same line
   static const int MERGE_RADIUS = 5;              //radial-distance between peaks belonging to the same line
   static const int MIN_PEAKS = 3;                 //minimum number of peaks required for a line

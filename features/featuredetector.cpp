@@ -37,7 +37,6 @@ int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCo
   
 //   std::cout << "getting features...\n";
   int numf = this->extractCorners(featVec, &lineSegments);
-  return numf;
   
 //   for (int i=0; i<featVec->size(); i++){
 //     std::cout << "Feature: ";
@@ -46,7 +45,7 @@ int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCo
 //   }
   
 //   (*structCompass) = getStructCompass(&lineSegments);
-//   return numf;
+  return numf;
 }
 
 
