@@ -152,12 +152,35 @@ int main(int argc, char **argv)
   //*/
   
   FeatureDetector* f = new FeatureDetector(&sick);
+
+  std::chrono::high_resolution_clock::time_point t1; 
+  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+
+  MovementController* mov = new MovementController(&robot, &sick);
+  mov->start();
+  std::cout << "Started\n";
+
+  robot.requestEncoderPackets();
+  
+//   double x1 = 0;
+//   double y1 = 0;
+//   double phi1 = 0;
+  double dt = 0.001;
+
+  KalmanFilter* ekf = new KalmanFilter(&robot);
   
   while (1){
     sick.lockDevice();
     std::vector<ArSensorReading> *readings = sick.getRawReadingsAsVector();
     std::vector<struct houghLine> lines;
     sick.unlockDevice();
+
+    // Propagation
+    t1 = t2;
+    t2 = std::chrono::high_resolution_clock::now();
+    long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    dt = (double)microseconds / 1000000.0;
+    ekf->doPropagation(dt);
 //     HoughTransform* h = new HoughTransform();
     std::vector<Feature> fvec;
     
@@ -165,24 +188,21 @@ int main(int argc, char **argv)
 //       h->getLines(readings, &lines);
 //       h->clearHoughGrid();
 //       std::cout << "Start...\n";
-      std::chrono::high_resolution_clock::time_point t11 = std::chrono::high_resolution_clock::now();
       f->getFeatures(&fvec, nullptr);
-      std::chrono::high_resolution_clock::time_point t22 = std::chrono::high_resolution_clock::now();
       for (int i=0; i<fvec.size(); i++){
         std::cout << fvec[i].x << " ";
         std::cout << fvec[i].y << " ";
+        std::cout << std::endl;
       }
-      long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t22 - t11).count();
-      std::cout << microseconds << std::endl;
 //       std::cout << "Done!\n";
 
-      sleep(0.5);
+   	usleep(1000);
     }
   }
   return 0;
   
   
-  MovementController* mov = new MovementController(&robot, &sick);
+/*  MovementController* mov = new MovementController(&robot, &sick);
   mov->start();
   std::cout << "Started\n";
   mov->join();
@@ -191,7 +211,7 @@ int main(int argc, char **argv)
   std::cout << "waiting\n";
   Aria::exit(0);
   std::cout << "Aria done\n";
-  return 0;
+  return 0;*/
   
   
   /*
@@ -207,20 +227,20 @@ int main(int argc, char **argv)
   robot.addAction(&avoidFrontFar, 49);
   robot.addAction(&constantVelocity, 25);//*/
   
-  robot.requestEncoderPackets();
+  //robot.requestEncoderPackets();
   
 //   double x1 = 0;
 //   double y1 = 0;
 //   double phi1 = 0;
-  double dt = 0.001;
+  //double dt = 0.001;
 /*  
   double rx, ry, rphi;
   double x2, y2, phi2;*/
   
-  std::chrono::high_resolution_clock::time_point t1; 
-  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+  //std::chrono::high_resolution_clock::time_point t1; 
+  //std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
   
-  KalmanFilter* ekf = new KalmanFilter(&robot);
+  //KalmanFilter* ekf = new KalmanFilter(&robot);
   
   //register packet handler
   ArGlobalRetFunctor1<bool, ArRobotPacket *> ph(&updateRealPose);
@@ -246,11 +266,11 @@ int main(int argc, char **argv)
 //     //*/
 //     robot.unlock();
     
-    t1 = t2;
+/*    t1 = t2;
     t2 = std::chrono::high_resolution_clock::now();
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     dt = (double)microseconds / 1000000.0;
-    ekf->doPropagation(dt);
+    ekf->doPropagation(dt);*/
     
     
 //     x2 = x1 + dt*V*cos(phi1);

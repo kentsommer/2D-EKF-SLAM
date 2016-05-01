@@ -13,10 +13,10 @@ KalmanFilter::KalmanFilter(ArRobot* robot){
 
 
 void KalmanFilter::doPropagation(double dt) {
-  std::cout << "\nX_hat_min =" << std::endl;
-  std::cout << (*state) << std::endl << std::endl;
-  std::cout << "P_min =" << std::endl;
-  std::cout << (*covariance) << std::endl;
+  // std::cout << "\nX_hat_min =" << std::endl;
+  // std::cout << (*state) << std::endl << std::endl;
+  //std::cout << "P_min =" << std::endl;
+  //std::cout << (*covariance) << std::endl;
   
   
   robot->lock();

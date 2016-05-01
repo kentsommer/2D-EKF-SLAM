@@ -20,10 +20,10 @@ public:
   double NO_COMPASS = 100.0;
   
   static const int MAX_DIST = HoughTransform::MAX_DIST;
-  static const int MIN_POINTS = 5;  //minimum number of points needed for a line segment
-  static const int POINT_DIST = 100; //distance between points on same line segment (mm)
+  static const int MIN_POINTS = 3;  //minimum number of points needed for a line segment
+  static const int POINT_DIST = 600; //distance between points on same line segment (mm)
   
-  double CORNER_THETA = 45.0 * 3.141592654/180.0;   //min angle between segments making a corner
+  double CORNER_THETA = 22.0 * 3.141592654/180.0;   //min angle between segments making a corner
   static const int CORNER_DIST = 90000; //squared distance between segment and feature (mm)
   
   FeatureDetector(ArSick* sick);
