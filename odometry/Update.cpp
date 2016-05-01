@@ -22,10 +22,11 @@ typedef struct State_Covariance {
 //Calculating condition number:
 //http://stackoverflow.com/questions/33575478/how-can-you-find-the-condition-number-in-eigen
 
-int knownFeatureNumber;
+int knownFeatureNumber
 
 Eigen::MatrixXd addFeature(Eigen::VectorXd x_hat, Eigen::MatrixXd P,double F_X_m,double F_Y_m,Eigen::MatrixXd R) {
 	
+	// = (x_hat_size.size()-3)/2;
 	double xhat=x_hat(0);
 	double yhat=x_hat(1);
 	double phihat=x_hat(2);
