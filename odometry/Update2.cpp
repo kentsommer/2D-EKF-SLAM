@@ -213,7 +213,7 @@ Eigen::MatrixXd Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::
 				//std::cout << S << std::endl;
 				Mahal_dist = temp;
 				Opt_i = i;
-				
+				std::cout<<S<<std::endl;
 				Opt_res = res;
 				Opt_S = S;
 				Opt_H_R = H_R;
@@ -262,10 +262,10 @@ Eigen::MatrixXd Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::
 			
 			//std::cout << "Kalman Gain:" << std::endl;
  			//std::cout << K <<std::endl;
-			//std::cout << "state: " << std::endl;
-			//std::cout << x_hat_min << std::endl;
-			//std::cout << "Covarinace: "<< std::endl;
-			//std::cout << P_min << std::endl;
+			std::cout << "state: " << std::endl;
+			std::cout << x_hat_min << std::endl;
+			std::cout << "Covarinace: "<< std::endl;
+			std::cout << P_min << std::endl;
 		}
 	}	
 	Set = Eigen::MatrixXd(x_hat_min.size(),x_hat_min.size()+1);
@@ -285,7 +285,7 @@ int main()
 
 	Eigen::VectorXd x_hat_min;
 	Eigen::MatrixXd P_min;
-	
+	Eigen::MatrixXd tempTrans;	
 	Eigen::MatrixXd m(n,n);		//Covariance of state including robot and landmark
 	Eigen::MatrixXd Q(2,2);		//Covariance of noise of Control input: linear/rotational velocity
 	Eigen::MatrixXd Q_chunk(2,n-3);
@@ -310,6 +310,8 @@ int main()
 	//std::cout << x_hat_min.transpose() << endl;
 	//std::cout<<m.size()<<std::endl;
 	//std::cout<< x_hat_min.transpose() << endl;
+	tempTrans = 0.5*(m + m.transpose());
+	m = tempTrans;
 
 	Q << sigma_v, 0,
       		0, sigma_w;
