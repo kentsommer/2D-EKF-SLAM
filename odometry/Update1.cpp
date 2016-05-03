@@ -65,7 +65,7 @@ Eigen::MatrixXd addFeature(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::Vect
   		Prj=P.block<3,2>(0,3+2*j);
   	
   		Pjr=P.block<3,2>(3+2*j,0);
-  		Pjr=Prj.transpose();
+  		Pjr=Prj.transposeInPlace();
   		P.block<2,2>(3+knownFeatureNumber*2,3+2*j)=-Hli.transpose()*Hr*Prj;
   		P.block<2,2>(3+2*j,3+knownFeatureNumber*2)=-Pjr*Hr.transpose()*Hli;
   		
