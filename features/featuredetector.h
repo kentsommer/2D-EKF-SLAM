@@ -2,9 +2,11 @@
 #define FEATUREDETECTOR_H
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <cstdio>
+#include <unistd.h>
 #include "Aria.h"
 
 #include "houghtransform.h"
@@ -30,6 +32,7 @@ public:
   ~FeatureDetector();
   
   int getFeatures(std::vector<Feature> *featVec, double* structCompass);
+  void start();
   
 private:
   struct lineSegment{
@@ -47,9 +50,6 @@ private:
   int fitLineSegments(std::vector<ArSensorReading> *readings, 
                       std::vector<struct houghLine> *lines, 
                       std::vector<struct lineSegment> *segments);
-  
-  struct lineSegment* mergeSegmentsX(struct lineSegment* segments);
-  struct lineSegment* mergeSegmentsY(struct lineSegment* segments);
     
   double getStructCompass(std::vector<struct lineSegment> *segments);
   int extractCorners(std::vector<Feature> *featVec, std::vector<struct lineSegment> *segments);

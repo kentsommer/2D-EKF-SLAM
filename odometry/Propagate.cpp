@@ -67,7 +67,7 @@ Eigen::MatrixXd KalmanFilter::Propagate(Eigen::VectorXd x_hat_plus, Eigen::Matri
 	P_min.block(3,3,n-3,n-3) = P_plus.block(3,3,n-3, n-3);
 
 	// Make sure the matrix is symmetric, may skip this option
-	tempTrans = 0.5(P_min + P_min.transpose());
+	tempTrans = 0.5*(P_min + P_min.transpose());
 	P_min = tempTrans;	
 
 	// Put State vector and Covariance into one matrix and return it.

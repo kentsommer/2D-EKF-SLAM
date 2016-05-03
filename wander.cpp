@@ -152,13 +152,14 @@ int main(int argc, char **argv)
   //*/
   
   FeatureDetector* f = new FeatureDetector(&sick);
+  //f->start();
 
   std::chrono::high_resolution_clock::time_point t1; 
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
-  MovementController* mov = new MovementController(&robot, &sick);
-  mov->start();
-  std::cout << "Started\n";
+//   MovementController* mov = new MovementController(&robot, &sick);
+//   mov->start();
+//   std::cout << "Started\n";
 
   robot.requestEncoderPackets();
   
