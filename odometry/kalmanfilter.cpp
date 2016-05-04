@@ -46,8 +46,10 @@ void KalmanFilter::doPropagation(double dt) {
   // and parse them out to state vector and covariance matrix
   (*state) = Set.block(0,0,n,1);
   (*covariance) = Set.block(0,1,n,n);
-
-
+  
+  X = (*state)(0);
+  Y = (*state)(1);
+  Phi = (*state)(2);
   
   
   
@@ -70,6 +72,10 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
   size = sqrt(Set.size());
   (*state) = Set.block(0, 0, size, 1);
   (*covariance) = Set.block(0, 1, size, size);
+  
+  X = (*state)(0);
+  Y = (*state)(1);
+  Phi = (*state)(2);
 
 
 }

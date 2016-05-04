@@ -7,14 +7,46 @@ void* feature_save(void* args){
   FeatureDetector* f = new FeatureDetector(sick);
   
   char* filename = "./features.txt";
-  std::ofstream out (filename, std::ofstream::out);
+  char* filename2 = "./laserscans.txt";
+  std::ofstream outFeat (filename, std::ofstream::out);
+  std::ofstream outLas (filename2, std::ofstream::out);
+  
+  int count = 5;
+  struct timeval tp;
+  long milliseconds;
   
   while(1){
     std::vector<Feature> fvec;
+    gettimeofday(&tp, NULL);
     f->getFeatures(&fvec, nullptr);
-    for (int i=0; i<fvec.size(); i++){
-      out << fvec[i].x << " " << fvec[i].y << std::endl;
+    
+    if (fvec.size() > 0) {
+      milliseconds = tp.tv_sec*1000 + tp.tv_usec / 1000;
+      outFeat << milliseconds << " ";
+      
+      for (int i=0; i<fvec.size(); i++){
+        outFeat << fvec[i].x << " " << fvec[i].y << " ";
+      }
+      outFeat << std::endl;
     }
+    
+    if (count++ == 5){
+      count = 1;
+      sick->lockDevice();
+        std::vector<ArSensorReading> *r = sick->getRawReadingsAsVector();
+        std::vector<ArSensorReading> readings(*r);
+      sick->unlockDevice();
+      
+      outLas << milliseconds << " ";
+      
+      for (int i=0; i<readings.size(); i++){
+        outLas << readings[i].getLocalX() << " ";
+        outLas << readings[i].getLocalY() << " ";
+      }
+      
+      outLas << std::endl;
+    }
+    
     usleep(1000000);
   }
 

@@ -27,6 +27,7 @@ Adept MobileRobots, 10 Columbia Drive, Amherst, NH 03031; +1-603-881-7960
 #include <unistd.h>
 #include <cmath>
 #include <chrono>
+#include <Eigen/Dense>
 
 #include "Aria.h"
 #include "odometry/kalmanfilter.h"
@@ -152,14 +153,14 @@ int main(int argc, char **argv)
   //*/
   
   FeatureDetector* f = new FeatureDetector(&sick);
-  //f->start();
+//   f->start();
 
   std::chrono::high_resolution_clock::time_point t1; 
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
-//   MovementController* mov = new MovementController(&robot, &sick);
-//   mov->start();
-//   std::cout << "Started\n";
+  MovementController* mov = new MovementController(&robot, &sick);
+  mov->start();
+  std::cout << "Started\n";
 
   robot.requestEncoderPackets();
   
@@ -171,34 +172,35 @@ int main(int argc, char **argv)
   KalmanFilter* ekf = new KalmanFilter(&robot);
   
   while (1){
-    sick.lockDevice();
-    std::vector<ArSensorReading> *readings = sick.getRawReadingsAsVector();
-    std::vector<struct houghLine> lines;
-    sick.unlockDevice();
-
     // Propagation
     t1 = t2;
     t2 = std::chrono::high_resolution_clock::now();
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     dt = (double)microseconds / 1000000.0;
     ekf->doPropagation(dt);
-//     HoughTransform* h = new HoughTransform();
-    std::vector<Feature> fvec;
     
-    if (readings->size() > 0){
-//       h->getLines(readings, &lines);
-//       h->clearHoughGrid();
-//       std::cout << "Start...\n";
-      f->getFeatures(&fvec, nullptr);
-      for (int i=0; i<fvec.size(); i++){
-        std::cout << fvec[i].x << " ";
-        std::cout << fvec[i].y << " ";
-        std::cout << std::endl;
-      }
-//       std::cout << "Done!\n";
-
-   	usleep(1000);
-    }
+    //measurements
+    std::vector<Feature> fvec;
+    f->getFeatures(&fvec, nullptr);
+    
+//     std::cout << "Updt\n";
+//     for (int i=0; i<fvec.size(); i++){
+//       //updates
+//       Eigen::MatrixXd z_chunk(2,1);
+//       z_chunk << (fvec[i].x/1000.0), (fvec[i].y/1000.0);
+//       Eigen::MatrixXd R_chunk(2,2);
+//       R_chunk << 0.000625, 0, 0, 0.000625;
+//       ekf->doUpdate(z_chunk, R_chunk);
+//     }
+    
+    std::cout << ekf->X << " " << ekf->Y << " " << ekf->Phi << std::endl;
+    
+    
+//     for (int i=0; i<fvec.size(); i++){
+//       std::cout << fvec[i].x << " ";
+//       std::cout << fvec[i].y << " ";
+//     }
+//     std::cout << std::endl;
   }
   return 0;
   

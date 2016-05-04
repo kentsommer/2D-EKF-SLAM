@@ -7,6 +7,8 @@
 #include <cmath>
 #include <cstdio>
 #include <unistd.h>
+//#include <time.h>
+#include <sys/time.h>
 #include "Aria.h"
 
 #include "houghtransform.h"
