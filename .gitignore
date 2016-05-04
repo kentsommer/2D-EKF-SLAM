@@ -16,3 +16,7 @@ sbuild/
 *.kdev4/
 *.kdev4
 
+# Run text files #
+##################
+*Run.txt
+

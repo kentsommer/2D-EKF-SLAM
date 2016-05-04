@@ -189,9 +189,9 @@ int main(int argc, char **argv)
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
 
-  robot.lock();
+/*  robot.lock();
   robot.setVel2(150, 150);
-  robot.unlock();
+  robot.unlock();*/
 
 
   // setup new FeatureDetector
@@ -238,7 +238,13 @@ int main(int argc, char **argv)
       Eigen::MatrixXd R_chunk(2,2);
       R_chunk << 0.000625, 0, 0, 0.000625;
       //ekf->doUpdate(z_chunk, R_chunk);
-      featuresFile << fvec[i].x/1000.0 + ekf->X << " " << fvec[i].y/1000.0 + ekf->Y << std::endl;
+      
+      double fx = fvec[i].x/1000.0;
+      double fy = fvec[i].y/1000.0;
+      double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
+      double newY = fx*sin(ekf->Phi) + fy*cos(ekf->Phi);
+      
+      featuresFile << newX + ekf->X << " " << newY + ekf->Y << std::endl;
     }
     
 
