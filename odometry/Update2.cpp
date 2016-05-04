@@ -262,7 +262,7 @@ Eigen::MatrixXd KalmanFilter::Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			H_R = Opt_H_R;
 			S = Opt_S;
 
-			K = (P_min.block(0,0,stateSize,3)*H_R.transpose() + P_min.block(0,Li,stateSize,2)*H_Li.transpose())*temp_inv_S;
+			K = (P_min.block(0,0,stateSize,3)*H_R.transpose() + P_min.block(0,Li,stateSize,2)*H_Li.transpose()) * S.inverse();
 			
 			x_hat_min = x_hat_min + K*res;
 			P_min = P_min - K*S*K.transpose();
