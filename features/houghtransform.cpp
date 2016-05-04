@@ -215,7 +215,6 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
     if (mergeMatrix[i] != -1) continue;
     
     curGroup = &(groups[i]);
-    if (curGroup->numPoints < MIN_PEAKS) continue;
     
     struct houghLine curLine;
     curLine.theta = curGroup->theta / (double)curGroup->weight;

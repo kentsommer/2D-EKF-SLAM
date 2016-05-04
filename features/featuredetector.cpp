@@ -149,7 +149,7 @@ int FeatureDetector::fitLineSegments(std::vector<ArSensorReading> *readings,
   struct lineSegment* mergeSeg;
   
   for (int r=0; r<readings->size(); r++){
-    if ((*readings)[r].getRange() > MAX_DIST || (*readings)[r].getRange() < MIN_DIST) continue;
+    if ((*readings)[r].getRange() > MAX_DIST) continue;
     
     minDiff = 1000000.0;
     locX = (*readings)[r].getLocalX();
@@ -332,10 +332,11 @@ int FeatureDetector::extractCorners(std::vector<Feature> *featVec, std::vector<s
       dy = seg2.endY - y;
       end2 = (dx*dx + dy*dy) < CORNER_DIST;
       
-      if ((start1 || end1) && (start2 || end2)){
+      if ((start1 || end1) && (start2 || end2) && ((x*x + y*y) > MIN_DIST)){
         Feature f;
         f.x = x;
         f.y = y;
+        
         featVec->push_back(f);
         count++;
       }

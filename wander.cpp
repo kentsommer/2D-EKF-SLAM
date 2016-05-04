@@ -93,11 +93,11 @@ int main(int argc, char **argv)
   std::string odomfileName = "./data/odom/odomRun.txt";
   std::string odomPath = odomfileName; // + dateTime;
   std::remove(odomPath.c_str());
-    //laser
-  std::ofstream laserFile;
-  std::string laserfileName = "./data/laser/laserRun.txt";
-  std::string laserPath = laserfileName; // + dateTime;
-  std::remove(laserPath.c_str());
+    //scan points
+  std::ofstream scanFile;
+  std::string scanfileName = "./data/scan/scanRun.txt";
+  std::string scanPath = scanfileName; // + dateTime;
+  std::remove(scanPath.c_str());
     //features
   std::ofstream featuresFile;
   std::string featuresfileName = "./data/features/featuresRun.txt";
@@ -105,8 +105,8 @@ int main(int argc, char **argv)
   std::remove(featuresPath.c_str());
     //Open all out files
   odomFile.open(odomPath);
-  laserFile.open(laserPath);
   featuresFile.open(featuresPath);
+  scanFile.open(scanPath);
 
   Aria::init();
   ArArgumentParser argParser(&argc, argv);
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
 
   // setup movement controller and start it
   MovementController* mov = new MovementController(&robot, &sick);
-  //mov->start();
+  mov->start();
   std::cout << "Started\n";
 
 
@@ -212,6 +212,7 @@ int main(int argc, char **argv)
   
   // set dt
   double dt = 0.001;
+  double loopTime = 0.0;
 
   // setup new Kalman Filter
   KalmanFilter* ekf = new KalmanFilter(&robot);
@@ -230,7 +231,7 @@ int main(int argc, char **argv)
     std::vector<Feature> fvec;
     f->getFeatures(&fvec, nullptr);
     
-    std::cout << "Updt\n";
+//     std::cout << "Updt\n";
     for (int i=0; i<fvec.size(); i++){
       //updates
       Eigen::MatrixXd z_chunk(2,1);
@@ -249,8 +250,30 @@ int main(int argc, char **argv)
     
 
 
-    std::cout << ekf->X << " " << ekf->Y << " " << ekf->Phi << std::endl;
+//     std::cout << ekf->X << " " << ekf->Y << " " << ekf->Phi << std::endl;
     odomFile << ekf->X << " " << ekf->Y << std::endl;
+    
+    loopTime += dt;
+    if (loopTime > 1.0){      
+      sick.lockDevice();
+        std::vector<ArSensorReading> *r = sick.getRawReadingsAsVector();
+        std::vector<ArSensorReading> readings(*r);
+      sick.unlockDevice();
+            
+      for (int i=0; i<readings.size(); i++){
+        if (readings[i].getRange() > 10000) continue;
+        
+        double fx = readings[i].getLocalX()/1000.0;
+        double fy = readings[i].getLocalY()/1000.0;
+        double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
+        double newY = fx*sin(ekf->Phi) + fy*cos(ekf->Phi);
+        scanFile << newX + ekf->X << " " << newY + ekf->Y << std::endl;
+      }
+      
+      loopTime = 0.0;
+    }
+    
+    
     //std::cout << "We have a feature at" << std::endl;
       //std::cout << "Time is: " << get_date() << std::endl;
     
@@ -262,8 +285,8 @@ int main(int argc, char **argv)
   }
   // close all out files
   odomFile.close();
-  laserFile.close();
   featuresFile.close();
+  scanFile.close();
   return 0;
   
   
