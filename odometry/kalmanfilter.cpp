@@ -1,5 +1,5 @@
 #include "kalmanfilter.h"
-
+#include <math.h>
 
 KalmanFilter::KalmanFilter(ArRobot* robot){
   this->robot = robot;
@@ -46,8 +46,30 @@ void KalmanFilter::doPropagation(double dt) {
   // and parse them out to state vector and covariance matrix
   (*state) = Set.block(0,0,n,1);
   (*covariance) = Set.block(0,1,n,n);
+
+
   
   
   
   //printf("%f\n", sin(pi/2));
+}
+
+void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
+
+  //Set Mahalanobis thresholds
+  int Gamma_max = 9;
+  int Gamma_min = 4;
+  //Variable to hold out size
+  int size;
+  // Hold out matrices state and covariance
+  Eigen::MatrixXd Set;
+
+  //Set = Update1(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
+  Set = Update2(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
+
+  size = sqrt(Set.size());
+  (*state) = Set.block(0, 0, size, 1);
+  (*covariance) = Set.block(0, 1, size, size);
+
+
 }

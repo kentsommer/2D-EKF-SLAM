@@ -2,9 +2,7 @@
 #include <iostream>
 #include <math.h>
 #include <stdio.h>
-
-double inf = 999999999999;
-double pi = 3.141592653589793238462643383279502884197169399375105820974944592307816406286;
+#include "kalmanfilter.h"
 
 using namespace std;
 
@@ -23,7 +21,7 @@ From 2nd column to last column: P_min
 
 we can parse those two out in the main function		*/ 
 
-Eigen::MatrixXd addFeature(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::VectorXd newLand,Eigen::MatrixXd R) {
+Eigen::MatrixXd KalmanFilter::addFeature1(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::VectorXd newLand,Eigen::MatrixXd R) {
 	
 	int knownFeatureNumber = (x_hat.size()-3)/2;
 	double F_X_m = newLand(0);
@@ -102,16 +100,16 @@ Eigen::MatrixXd addFeature(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::Vect
 
 
 
-Eigen::MatrixXd Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min)
+Eigen::MatrixXd KalmanFilter::Update1(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min)
 {
 	
 	int i, j, Li, tempSize;	
 
 	int n_lm = (x_hat_min.size()-3)/2;		// #of landmark in the map
-	int n_z = z_chunk.size()/2;				// #of inferred relative position measurements
+	int n_z = z_chunk.size()/2;				// #of INFerred relative position measurements
 	
 	double phi = x_hat_min(2);	
-	double Mahal_dist = inf;
+	double Mahal_dist = INF;
 	
 	Eigen::MatrixXd tempTrans;
 	Eigen::MatrixXd I;
@@ -167,7 +165,7 @@ Eigen::MatrixXd Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::
 
 		//Get the Mahalanobis distance between z_j and all of landmarks,
 		//Pick the landmark with minimum Mahalanobis distance and save corresponding H/H_R/H_Li
-		Mahal_dist = inf;
+		Mahal_dist = INF;
 		Opt_i = 0;
 
 		for(i=1;i<=n_lm;i++)
@@ -222,7 +220,7 @@ Eigen::MatrixXd Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::
 			printf("%d: Initialize\n", j);
 			newLand = G_pR_hat + C*z;
 			//call initialize()
-			Eigen::MatrixXd Set = addFeature(x_hat_min, P_min, newLand, R);
+			Eigen::MatrixXd Set = KalmanFilter::addFeature1(x_hat_min, P_min, newLand, R);
 			
 			//get Size
 			tempSize = Set.size();
@@ -275,7 +273,7 @@ Eigen::MatrixXd Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::
 	return Set;
 }
 
-int main()
+/*int main()
 {
 	int n = 9;			//size of state vector, #of Landmark = (n-3)/2
 	int i;
@@ -293,7 +291,7 @@ int main()
 	Eigen::MatrixXd S;
 	Eigen::MatrixXd z_chunk(2,(n-3)/2);
 	x_hat_min = Eigen::VectorXd(n);
-	x_hat_min(2) = pi/2;
+	x_hat_min(2) = PI/2;
 
 	//Practice input
 	m <<  67, 89, 1, 2, 3, 4, 17, 18, 37,
@@ -325,4 +323,4 @@ int main()
 	z_chunk.block(0,2,2,1) << 15,15;
 	S = Update(x_hat_min, m, z_chunk, Q_chunk, 1,2);
 	
-}
+}*/

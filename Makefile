@@ -7,7 +7,7 @@ MAINOUT = wander
 SICKOUT = sickReadings
 
 MAININ = wander.cpp
-ODOMIN = odometry/kalmanfilter.cpp odometry/Propagate.cpp
+ODOMIN = odometry/kalmanfilter.cpp odometry/Propagate.cpp odometry/Update1.cpp odometry/Update2.cpp
 MOVEIN = movement/movementcontroller.cpp
 SICKIN = sick/sickReadings.cpp
 FEATIN = features/houghtransform.cpp features/featuredetector.cpp

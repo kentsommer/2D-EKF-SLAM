@@ -12,6 +12,9 @@
 
 #include "Aria.h"
 
+#define INF 999999999999
+#define PI 3.141592653589793238462643383279502884197169399375105820974944592307816406286
+
 
 class KalmanFilter
 {
@@ -22,6 +25,7 @@ public:
   
   KalmanFilter(ArRobot* robot);
   void doPropagation(double dt);
+  void doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk);
   
 private:
   ArRobot* robot;
@@ -30,6 +34,14 @@ private:
   Eigen::MatrixXd* covariance;
   
   Eigen::MatrixXd Propagate(Eigen::VectorXd x_hat_plus, Eigen::MatrixXd P_plus, double v_m, double w_m, Eigen::MatrixXd Q, double dt);
+
+  Eigen::MatrixXd Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
+
+  Eigen::MatrixXd Update1(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
+
+  Eigen::MatrixXd addFeature1(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::VectorXd newLand,Eigen::MatrixXd R);
+
+  Eigen::MatrixXd addFeature2(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::VectorXd newLand,Eigen::MatrixXd R);
 };
 
 #endif // KALMANFILTER_H
