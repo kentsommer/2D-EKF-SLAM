@@ -146,7 +146,7 @@ int main(int argc, char **argv)
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
   
-  /*
+  
   robot.lock();
   robot.setVel2(200, 200);
   robot.unlock();
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
   MovementController* mov = new MovementController(&robot, &sick);
-  mov->start();
+//   mov->start();
   std::cout << "Started\n";
 
   robot.requestEncoderPackets();
@@ -183,15 +183,15 @@ int main(int argc, char **argv)
     std::vector<Feature> fvec;
     f->getFeatures(&fvec, nullptr);
     
-//     std::cout << "Updt\n";
-//     for (int i=0; i<fvec.size(); i++){
-//       //updates
-//       Eigen::MatrixXd z_chunk(2,1);
-//       z_chunk << (fvec[i].x/1000.0), (fvec[i].y/1000.0);
-//       Eigen::MatrixXd R_chunk(2,2);
-//       R_chunk << 0.000625, 0, 0, 0.000625;
-//       ekf->doUpdate(z_chunk, R_chunk);
-//     }
+    std::cout << "Updt\n";
+    for (int i=0; i<fvec.size(); i++){
+      //updates
+      Eigen::MatrixXd z_chunk(2,1);
+      z_chunk << (fvec[i].x/1000.0), (fvec[i].y/1000.0);
+      Eigen::MatrixXd R_chunk(2,2);
+      R_chunk << 0.000625, 0, 0, 0.000625;
+      ekf->doUpdate(z_chunk, R_chunk);
+    }
     
     std::cout << ekf->X << " " << ekf->Y << " " << ekf->Phi << std::endl;
     

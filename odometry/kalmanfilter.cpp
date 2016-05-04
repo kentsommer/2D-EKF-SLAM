@@ -25,7 +25,7 @@ void KalmanFilter::doPropagation(double dt) {
   robot->unlock();
   
   
-  int n = 3;          //size of state vector, #of Landmark = (n-3)/2
+  int n = (*state).size();          //size of state vector, #of Landmark = (n-3)/2
 
   double v =V/1000.0;
   double w = RTV;
@@ -59,7 +59,7 @@ void KalmanFilter::doPropagation(double dt) {
 void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
   //Set Mahalanobis thresholds
-  int Gamma_max = 9;
+  int Gamma_max = 300;
   int Gamma_min = 4;
   //Variable to hold out size
   int size;
@@ -68,8 +68,14 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
   //Set = Update1(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
   Set = Update2(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
-
+  
   size = sqrt(Set.size());
+  
+  delete state;
+  delete covariance;
+  state = new Eigen::VectorXd(size);
+  covariance = new Eigen::MatrixXd(size,size);
+  
   (*state) = Set.block(0, 0, size, 1);
   (*covariance) = Set.block(0, 1, size, size);
   
