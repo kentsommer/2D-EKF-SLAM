@@ -1,5 +1,43 @@
 #include "featuredetector.h"
 
+
+
+void* feature_save(void* args){
+  ArSick* sick = (ArSick*)args;
+  FeatureDetector* f = new FeatureDetector(sick);
+  
+  char* filename = "./features.txt";
+  std::ofstream out (filename, std::ofstream::out);
+  
+  while(1){
+    std::vector<Feature> fvec;
+    f->getFeatures(&fvec, nullptr);
+    for (int i=0; i<fvec.size(); i++){
+      out << fvec[i].x << " " << fvec[i].y << std::endl;
+    }
+    usleep(1000000);
+  }
+
+  delete f;
+  pthread_exit(nullptr);
+}
+
+
+void FeatureDetector::start(){
+  pthread_t thread;
+  
+  int tc = pthread_create(&thread, nullptr, feature_save, (void*)sick);
+  if (tc) std::cout << "Thread creation Error\n";
+}
+
+
+
+
+
+
+
+
+
 FeatureDetector::FeatureDetector(ArSick* sick){
   this->sick = sick;
   this->hough = new HoughTransform();
@@ -16,6 +54,8 @@ int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCo
     std::vector<ArSensorReading> *r = sick->getRawReadingsAsVector();
     std::vector<ArSensorReading> readings(*r);
   sick->unlockDevice();
+  
+  if (readings.size() == 0) return 0;
   
   std::vector<struct houghLine> houghLines;
   this->hough->getLines(&readings, &houghLines);
@@ -183,15 +223,9 @@ int FeatureDetector::fitLineSegments(std::vector<ArSensorReading> *readings,
   //push good line segments into vector
   int count = 0;
   struct lineSegment* last;
-  bool isHoriz;
   
   for (int i=0; i<initialSegs.size(); i++){
-    isHoriz = fabs(sin_array[i]) > fabs(cos_array[i]);
-    if (isHoriz){
-      mergeSeg = mergeSegmentsX(initialSegs[i]);
-    } else {
-      mergeSeg = mergeSegmentsY(initialSegs[i]);
-    }
+    mergeSeg = initialSegs[i];
     
     while (mergeSeg != nullptr){
       if (mergeSeg->numPoints > MIN_POINTS){
@@ -210,172 +244,11 @@ int FeatureDetector::fitLineSegments(std::vector<ArSensorReading> *readings,
 }
 
 
-struct FeatureDetector::lineSegment* FeatureDetector::mergeSegmentsX(struct lineSegment* segments){
-  int size = 0;
-  struct lineSegment* curSeg = segments;
-  
-  while(curSeg != nullptr){
-    size++;
-    curSeg = curSeg->next;
-  }
-  
-  if (size < 2) return segments;
-  
-  int i,j;
-  char mergeMatrix [size];
-  struct lineSegment* segArray [size];
-  curSeg = segments;
-  for (int i=0; i<size; i++){
-    mergeMatrix[i] = -1;
-    segArray[i] = curSeg;
-    curSeg = curSeg->next;
-  }
-  
-  bool startClose, endClose, startOverlap, endOverlap;
-  struct lineSegment* mergeSeg = segments;
-  curSeg = segments;
-  
-  //see which segments need to be merged
-  for (i=0; i<size; i++){
-    mergeSeg = segArray[i];
-    for (j=i+1; j<size; j++){
-      curSeg = segArray[j];
-      
-      startClose = (fabs(mergeSeg->startX - curSeg->endX) < POINT_DIST);
-      endClose = (fabs(mergeSeg->endX - curSeg->startX) < POINT_DIST);
-      startOverlap = (mergeSeg->startX > curSeg->endX) && (mergeSeg->startX < curSeg->startX);
-      endOverlap = (mergeSeg->endX > curSeg->endX) && (mergeSeg->endX < curSeg->startX);
-      
-      if (startClose || endClose || startOverlap || endOverlap){
-        mergeMatrix[j] = i;
-      }
-    }
-  }
-  
-  
-  //merge segments
-  for (i=0; i<size; i++){
-    if (mergeMatrix[i] == -1) continue;
-    
-    j = i;
-    while (mergeMatrix[j] != -1) j = mergeMatrix[j];
-    
-    mergeSeg = segArray[i];
-    curSeg = segArray[j];
-    
-    if (mergeSeg->startX > curSeg->startX){
-      curSeg->startX = mergeSeg->startX;
-      curSeg->startY = mergeSeg->startY;
-    }
-    
-    if (mergeSeg->endX < curSeg->endX){
-      curSeg->endX = mergeSeg->endX;
-      curSeg->endY = mergeSeg->endY;
-    }
-    
-    curSeg->numPoints += mergeSeg->numPoints;
-    delete mergeSeg;
-  }
-  
-  curSeg = nullptr;
-  //turn segment array to segment list and return
-  for (i=0; i<size; i++){
-    if (mergeMatrix[i] != -1) continue;
-    
-    mergeSeg = segArray[i];
-    mergeSeg->next = curSeg;
-    curSeg = mergeSeg;
-  }
-  
-  return curSeg;
-}
-
-
-struct FeatureDetector::lineSegment* FeatureDetector::mergeSegmentsY(struct lineSegment* segments){
-  int size = 0;
-  struct lineSegment* curSeg = segments;
-  
-  while(curSeg != nullptr){
-    size++;
-    curSeg = curSeg->next;
-  }
-  
-  if (size < 2) return segments;
-  
-  int i,j;
-  char mergeMatrix [size];
-  struct lineSegment* segArray [size];
-  curSeg = segments;
-  for (int i=0; i<size; i++){
-    mergeMatrix[i] = -1;
-    segArray[i] = curSeg;
-    curSeg = curSeg->next;
-  }
-  
-  bool startClose, endClose, startOverlap, endOverlap;
-  struct lineSegment* mergeSeg = segments;
-  curSeg = segments;
-  
-  //see which segments need to be merged
-  for (i=0; i<size; i++){
-    mergeSeg = segArray[i];
-    for (j=i+1; j<size; j++){
-      curSeg = segArray[j];
-      
-      startClose = (fabs(mergeSeg->startY - curSeg->endY) < POINT_DIST);
-      endClose = (fabs(mergeSeg->endY - curSeg->startY) < POINT_DIST);
-      startOverlap = (mergeSeg->startY > curSeg->endY) && (mergeSeg->startY < curSeg->startY);
-      endOverlap = (mergeSeg->endY > curSeg->endY) && (mergeSeg->endY < curSeg->startY);
-      
-      if (startClose || endClose || startOverlap || endOverlap){
-        mergeMatrix[j] = i;
-      }
-    }
-  }
-  
-  
-  //merge segments
-  for (i=0; i<size; i++){
-    if (mergeMatrix[i] == -1) continue;
-    
-    j = i;
-    while (mergeMatrix[j] != -1) j = mergeMatrix[j];
-    
-    mergeSeg = segArray[i];
-    curSeg = segArray[j];
-    
-    if (mergeSeg->startY > curSeg->startY){
-      curSeg->startX = mergeSeg->startX;
-      curSeg->startY = mergeSeg->startY;
-    }
-    
-    if (mergeSeg->endY < curSeg->endY){
-      curSeg->endX = mergeSeg->endX;
-      curSeg->endY = mergeSeg->endY;
-    }
-    
-    curSeg->numPoints += mergeSeg->numPoints;
-    delete mergeSeg;
-  }
-  
-  curSeg = nullptr;
-  //turn segment array to segment list and return
-  for (i=0; i<size; i++){
-    if (mergeMatrix[i] != -1) continue;
-    
-    mergeSeg = segArray[i];
-    mergeSeg->next = curSeg;
-    curSeg = mergeSeg;
-  }
-  
-  return curSeg;
-}
-
-
 
 double FeatureDetector::getStructCompass(std::vector<struct lineSegment> *segments){
   return NO_COMPASS;
 }
+
 
 
 int FeatureDetector::extractCorners(std::vector<Feature> *featVec, std::vector<struct lineSegment> *segments){
