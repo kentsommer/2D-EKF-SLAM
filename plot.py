@@ -27,8 +27,8 @@ ax1.set_title("Map of run")
 ax1.set_xlabel('X')
 ax1.set_ylabel('Y')
 
-ax1.plot(odx,ody, c='r', label='the odomData')
-ax1.plot(fex, fey, c='b', label='the featureData')
+ax1.plot(odx,ody, 'bo', label='the odomData')
+ax1.plot(fex, fey,'bo', label='the featureData')
 
 leg = ax1.legend()
 

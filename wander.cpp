@@ -92,14 +92,17 @@ int main(int argc, char **argv)
   std::ofstream odomFile;
   std::string odomfileName = "./data/odom/odomRun.txt";
   std::string odomPath = odomfileName; // + dateTime;
+  std::remove(odomPath.c_str());
     //laser
   std::ofstream laserFile;
   std::string laserfileName = "./data/laser/laserRun.txt";
   std::string laserPath = laserfileName; // + dateTime;
+  std::remove(laserPath.c_str());
     //features
   std::ofstream featuresFile;
   std::string featuresfileName = "./data/features/featuresRun.txt";
   std::string featuresPath = featuresfileName; // + dateTime;
+  std::remove(featuresPath.c_str());
     //Open all out files
   odomFile.open(odomPath);
   laserFile.open(laserPath);
@@ -186,9 +189,9 @@ int main(int argc, char **argv)
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
 
-/*  robot.lock();
-  robot.setVel2(150, 300);
-  robot.unlock();*/
+  robot.lock();
+  robot.setVel2(150, 150);
+  robot.unlock();
 
 
   // setup new FeatureDetector
@@ -201,7 +204,7 @@ int main(int argc, char **argv)
 
   // setup movement controller and start it
   MovementController* mov = new MovementController(&robot, &sick);
-  mov->start();
+  //mov->start();
   std::cout << "Started\n";
 
 
