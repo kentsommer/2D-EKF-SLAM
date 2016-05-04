@@ -28,6 +28,9 @@ Adept MobileRobots, 10 Columbia Drive, Amherst, NH 03031; +1-603-881-7960
 #include <cmath>
 #include <chrono>
 #include <Eigen/Dense>
+#include <fstream>
+#include <time.h>
+#include <string>
 
 #include "Aria.h"
 #include "odometry/kalmanfilter.h"
@@ -63,8 +66,45 @@ bool updateRealPose(ArRobotPacket* pkt)
 //////////////////////////////////////
 
 
+//////////////////////////////////////
+// Date for filename appending
+std::string get_date(void)
+{
+  time_t rawtime;
+  struct tm * timeinfo;
+  char buffer [80];
+
+  time (&rawtime);
+  timeinfo = localtime (&rawtime);
+
+  strftime (buffer,80,"_%F_%I:%M%p.txt",timeinfo);
+
+  return std::string(buffer);
+}
+
+
 int main(int argc, char **argv)
 {
+  // setup outfiles
+    // date
+  std::string dateTime = get_date();
+    // odometry
+  std::ofstream odomFile;
+  std::string odomfileName = "./data/odom/odomRun";
+  std::string odomPath = odomfileName + dateTime;
+    //laser
+  std::ofstream laserFile;
+  std::string laserfileName = "./data/laser/laserRun";
+  std::string laserPath = laserfileName + dateTime;
+    //features
+  std::ofstream featuresFile;
+  std::string featuresfileName = "./data/features/featuresRun";
+  std::string featuresPath = featuresfileName + dateTime;
+    //Open all out files
+  odomFile.open(odomPath);
+  laserFile.open(laserPath);
+  featuresFile.open(featuresPath);
+
   Aria::init();
   ArArgumentParser argParser(&argc, argv);
   argParser.loadDefaultArguments();
@@ -145,30 +185,32 @@ int main(int argc, char **argv)
   // turn on the motors, turn off amigobot sounds
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
-  
-  
+
 /*  robot.lock();
-  robot.setVel2(200, 200);
+  robot.setVel2(150, 300);
   robot.unlock();*/
-  //*/
-  
+
+
+  // setup new FeatureDetector
   FeatureDetector* f = new FeatureDetector(&sick);
 //   f->start();
 
+  // setup timers
   std::chrono::high_resolution_clock::time_point t1; 
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
+  // setup movement controller and start it
   MovementController* mov = new MovementController(&robot, &sick);
   mov->start();
   std::cout << "Started\n";
 
+
   robot.requestEncoderPackets();
   
-//   double x1 = 0;
-//   double y1 = 0;
-//   double phi1 = 0;
+  // set dt
   double dt = 0.001;
 
+  // setup new Kalman Filter
   KalmanFilter* ekf = new KalmanFilter(&robot);
   
   while (1){
@@ -193,8 +235,11 @@ int main(int argc, char **argv)
       ekf->doUpdate(z_chunk, R_chunk);
     }
     
+
+
     std::cout << ekf->X << " " << ekf->Y << " " << ekf->Phi << std::endl;
-    
+    odomFile << ekf->X << " " << ekf->Y << std::endl;
+      //std::cout << "Time is: " << get_date() << std::endl;
     
 //     for (int i=0; i<fvec.size(); i++){
 //       std::cout << fvec[i].x << " ";
@@ -202,6 +247,10 @@ int main(int argc, char **argv)
 //     }
 //     std::cout << std::endl;
   }
+  // close all out files
+  odomFile.close();
+  laserFile.close();
+  featuresFile.close();
   return 0;
   
   
