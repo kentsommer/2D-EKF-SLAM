@@ -116,7 +116,7 @@ Eigen::MatrixXd KalmanFilter::Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 	int n_lm = (x_hat_min.size()-3)/2;		// #of landmark in the map
 	int n_z = z_chunk.size()/2;				// #of INFerred relative position measurements
 	
-	double phi = x_hat_min(2);	
+	double phi;	
 	double Mahal_dist = INF;
 
 	Eigen::MatrixXd tempTrans;	
@@ -172,6 +172,7 @@ Eigen::MatrixXd KalmanFilter::Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 		//Fix those values by z_j or x_hat_min
 		z = z_chunk.block(0,j-1,2,1);
 		R = R_chunk.block(0,j*2-2,2,2);
+		phi = x_hat_min(2);
 		C << cos(phi), -sin(phi), sin(phi), cos(phi);
 		
 		P_RR = P_min.block(0,0,3,3);
@@ -220,8 +221,8 @@ Eigen::MatrixXd KalmanFilter::Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 				Opt_res = res;
 				Opt_S = S;
 				Opt_H_R = H_R;
-				Opt_H_Li= H_Li;
-				Opt_K = (P_min.block(0,0,stateSize,3)*H_R.transpose() + P_min.block(0,Li,stateSize,2)*H_Li.transpose())*temp_inv_S;
+				//Opt_H_Li= H_Li;
+				
 			}
 			
 		}
@@ -257,8 +258,12 @@ Eigen::MatrixXd KalmanFilter::Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			
 			//efficient way(block Operation)
 			res = Opt_res;
+			
+			H_R = Opt_H_R;
 			S = Opt_S;
-			K = Opt_K;
+
+			Opt_K = (P_min.block(0,0,stateSize,3)*H_R.transpose() + P_min.block(0,Li,stateSize,2)*H_Li.transpose())*temp_inv_S;
+			
 			x_hat_min = x_hat_min + K*res;
 			P_min = P_min - K*S*K.transpose();
 			tempTrans = 0.5*(P_min + P_min.transpose());

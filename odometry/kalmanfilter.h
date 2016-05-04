@@ -22,6 +22,7 @@ public:
   double X = 0.0;
   double Y = 0.0;
   double Phi = 0.0;
+  Eigen::MatrixXd* knownLandmarks;
   
   KalmanFilter(ArRobot* robot);
   void doPropagation(double dt);

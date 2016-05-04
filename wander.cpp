@@ -90,16 +90,16 @@ int main(int argc, char **argv)
   std::string dateTime = get_date();
     // odometry
   std::ofstream odomFile;
-  std::string odomfileName = "./data/odom/odomRun";
-  std::string odomPath = odomfileName + dateTime;
+  std::string odomfileName = "./data/odom/odomRun.txt";
+  std::string odomPath = odomfileName; // + dateTime;
     //laser
   std::ofstream laserFile;
-  std::string laserfileName = "./data/laser/laserRun";
-  std::string laserPath = laserfileName + dateTime;
+  std::string laserfileName = "./data/laser/laserRun.txt";
+  std::string laserPath = laserfileName; // + dateTime;
     //features
   std::ofstream featuresFile;
-  std::string featuresfileName = "./data/features/featuresRun";
-  std::string featuresPath = featuresfileName + dateTime;
+  std::string featuresfileName = "./data/features/featuresRun.txt";
+  std::string featuresPath = featuresfileName; // + dateTime;
     //Open all out files
   odomFile.open(odomPath);
   laserFile.open(laserPath);
@@ -212,6 +212,8 @@ int main(int argc, char **argv)
 
   // setup new Kalman Filter
   KalmanFilter* ekf = new KalmanFilter(&robot);
+
+
   
   while (1){
     // Propagation
@@ -232,13 +234,15 @@ int main(int argc, char **argv)
       z_chunk << (fvec[i].x/1000.0), (fvec[i].y/1000.0);
       Eigen::MatrixXd R_chunk(2,2);
       R_chunk << 0.000625, 0, 0, 0.000625;
-      ekf->doUpdate(z_chunk, R_chunk);
+      //ekf->doUpdate(z_chunk, R_chunk);
+      featuresFile << fvec[i].x/1000.0 + ekf->X << " " << fvec[i].y/1000.0 + ekf->Y << std::endl;
     }
     
 
 
     std::cout << ekf->X << " " << ekf->Y << " " << ekf->Phi << std::endl;
     odomFile << ekf->X << " " << ekf->Y << std::endl;
+    //std::cout << "We have a feature at" << std::endl;
       //std::cout << "Time is: " << get_date() << std::endl;
     
 //     for (int i=0; i<fvec.size(); i++){

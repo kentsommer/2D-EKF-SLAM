@@ -73,11 +73,24 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
   
   delete state;
   delete covariance;
+  delete knownLandmarks;
   state = new Eigen::VectorXd(size);
   covariance = new Eigen::MatrixXd(size,size);
+  if(size > 3){
+    knownLandmarks = new Eigen::MatrixXd((size-3)/2, 2);
+  }
   
+  std::cout << "size is: " << size << std::endl;
+  std::cout << "starting from index 3, going up " << size-3 << " indexes." << std::endl;
+
   (*state) = Set.block(0, 0, size, 1);
+
   (*covariance) = Set.block(0, 1, size, size);
+
+/*  for (int i=0; i<(size-3)/2; i++){
+    
+  }
+  (*knownLandmarks) = Set.block(0,2,size-3,1);*/
   
   X = (*state)(0);
   Y = (*state)(1);
