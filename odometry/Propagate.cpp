@@ -61,7 +61,8 @@ Eigen::MatrixXd KalmanFilter::Propagate(Eigen::VectorXd x_hat_plus, Eigen::Matri
 	P_min.block(0,3,3,n-3) = Phi_R * P_plus.block(0,3,3,n-3);
 
 	// P_LR
-	P_min.block(3,0,n-3,3) = P_min.block(0,3,3,n-3).transpose();
+	tempTrans = P_min.block(0,3,3,n-3).transpose();
+	P_min.block(3,0,n-3,3) = tempTrans;
 
 	// P_LL are not affected by propagation.
 	P_min.block(3,3,n-3,n-3) = P_plus.block(3,3,n-3, n-3);
