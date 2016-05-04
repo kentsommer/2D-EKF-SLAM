@@ -59,7 +59,7 @@ void KalmanFilter::doPropagation(double dt) {
 void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
   //Set Mahalanobis thresholds
-  int Gamma_max = 850;
+  int Gamma_max = 300;
   int Gamma_min = 4;
   //Variable to hold out size
   int size;
@@ -88,7 +88,7 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
   (*covariance) = Set.block(0, 1, size, size);
 
 /*  for (int i=0; i<(size-3)/2; i++){
-    
+
   }
   (*knownLandmarks) = Set.block(0,2,size-3,1);*/
   
