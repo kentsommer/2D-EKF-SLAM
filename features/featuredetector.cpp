@@ -149,7 +149,7 @@ int FeatureDetector::fitLineSegments(std::vector<ArSensorReading> *readings,
   struct lineSegment* mergeSeg;
   
   for (int r=0; r<readings->size(); r++){
-    if ((*readings)[r].getRange() > MAX_DIST) continue;
+    if ((*readings)[r].getRange() > MAX_DIST || (*readings)[r].getRange() < MIN_DIST) continue;
     
     minDiff = 1000000.0;
     locX = (*readings)[r].getLocalX();

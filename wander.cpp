@@ -147,9 +147,9 @@ int main(int argc, char **argv)
   robot.comInt(ArCommands::SOUNDTOG, 0);
   
   
-  robot.lock();
+/*  robot.lock();
   robot.setVel2(200, 200);
-  robot.unlock();
+  robot.unlock();*/
   //*/
   
   FeatureDetector* f = new FeatureDetector(&sick);
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
   std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
   MovementController* mov = new MovementController(&robot, &sick);
-//   mov->start();
+  mov->start();
   std::cout << "Started\n";
 
   robot.requestEncoderPackets();

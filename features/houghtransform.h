@@ -18,6 +18,7 @@ class HoughTransform
 {
 public:
   static const int MAX_DIST = 8000;               //maximum distance (mm) to lines
+  static const int MIN_DIST = 2000;               //minimum distance (mm) to lines
   static const int DISTANCE = 10;                 //distance between lines detected (mm)
   static const int THETA_SIZE = 180;              //number of bins to use for 180 degrees
   static const int RADIUS_SIZE = 2*MAX_DIST/DISTANCE + 1;  //Hough grid size
