@@ -6,8 +6,8 @@ void* feature_save(void* args){
   ArSick* sick = (ArSick*)args;
   FeatureDetector* f = new FeatureDetector(sick);
   
-  char* filename = "./features.txt";
-  char* filename2 = "./laserscans.txt";
+  char const *filename = "./features.txt";
+  char const *filename2 = "./laserscans.txt";
   std::ofstream outFeat (filename, std::ofstream::out);
   std::ofstream outLas (filename2, std::ofstream::out);
   

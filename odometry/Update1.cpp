@@ -29,11 +29,18 @@ Eigen::MatrixXd KalmanFilter::addFeature1(Eigen::VectorXd x_hat, Eigen::MatrixXd
 	double xhat=x_hat(0);
 	double yhat=x_hat(1);
 	double phihat=x_hat(2);
-	Eigen::MatrixXd P_hat=P;
+	
+    Eigen::MatrixXd P_hat=P;
+    P = Eigen::MatrixXd(5 + knownFeatureNumber*2, 5 + knownFeatureNumber*2);
+    P.block(0,0,3+knownFeatureNumber*2,3+knownFeatureNumber*2) = P_hat;
+    
 	double fxhat; // Feature global X coordinate
   	double fyhat; // Feature global Y coordinate
   	fxhat=xhat+F_X_m*cos(phihat)-F_Y_m*sin(phihat);
   	fyhat=yhat+F_Y_m*cos(phihat)+F_X_m*sin(phihat);
+    Eigen::VectorXd x_hat_temp = x_hat;
+    x_hat = Eigen::VectorXd(5+knownFeatureNumber*2);
+    x_hat.head(3+knownFeatureNumber*2) = x_hat_temp;
   	x_hat(3+knownFeatureNumber*2)=fxhat;
   	x_hat(4+knownFeatureNumber*2)=fyhat;
   	
@@ -56,16 +63,18 @@ Eigen::MatrixXd KalmanFilter::addFeature1(Eigen::VectorXd x_hat, Eigen::MatrixXd
   P.block<2,2>(3+knownFeatureNumber*2,3+knownFeatureNumber*2)=Hli.transpose()*(Hr*Prr*Hr.transpose()+R)*Hli;
 	Eigen::MatrixXd Prj(3,2);
     Eigen::MatrixXd Pjr(2,3);
+    
   if (knownFeatureNumber>0){
   	for (int j=0;j<knownFeatureNumber;j=j+1){
-  		std::cout << j << std::endl;
+//   		std::cout << j << std::endl;
 
   		Prj=P.block<3,2>(0,3+2*j);
   	
-  		Pjr=P.block<3,2>(3+2*j,0);
-  		Prj.transposeInPlace();
-  		P.block<2,2>(3+knownFeatureNumber*2,3+2*j)=-Hli.transpose()*Hr*Prj;
-  		P.block<2,2>(3+2*j,3+knownFeatureNumber*2)=-Pjr*Hr.transpose()*Hli;
+  		Pjr=P.block<2,3>(3+2*j,0); //3,2
+  		//Prj.transposeInPlace();
+        
+  		P.block(3+knownFeatureNumber*2,3+2*j,2,2)=-Hli.transpose()*Hr*Prj;
+  		P.block(3+2*j,3+knownFeatureNumber*2,2,2)=-Pjr*Hr.transpose()*Hli;
   		
 	  }//for
   }//if
@@ -206,7 +215,7 @@ Eigen::MatrixXd KalmanFilter::Update1(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 				
 				Opt_res = res;
 				inv_S = temp_inv_S;
-				std::cout<<S<<std::endl;
+				//std::cout<<S<<std::endl;
 				Opt_H = H;
 				Opt_H_R = H_R;
 				Opt_H_Li= H_Li;
@@ -214,16 +223,17 @@ Eigen::MatrixXd KalmanFilter::Update1(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			
 		}
 		
+		std::cout << "Dist: " << Mahal_dist << std::endl;
 		
 		if(Opt_i == 0 || Mahal_dist > Gamma_max)
 		{
 			printf("%d: Initialize\n", j);
 			newLand = G_pR_hat + C*z;
 			//call initialize()
-			Eigen::MatrixXd Set = KalmanFilter::addFeature1(x_hat_min, P_min, newLand, R);
+			Set = KalmanFilter::addFeature1(x_hat_min, P_min, newLand, R);
 			
 			//get Size
-			tempSize = Set.size();
+			tempSize = sqrt(Set.size());
 			x_hat_min = Set.block(0,0,tempSize,1);
 			P_min = Set.block(0,1,tempSize,tempSize);
 			
@@ -261,15 +271,17 @@ Eigen::MatrixXd KalmanFilter::Update1(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 
 			//std::cout << "Kalman Gain:" << std::endl;
  			//std::cout << K <<std::endl;
-			std::cout << "state: " << std::endl;
+/*			std::cout << "state: " << std::endl;
 			std::cout << x_hat_min << std::endl;
 			std::cout << "Covarinace: "<< std::endl;
-			std::cout << P_min << std::endl;
+			std::cout << P_min << std::endl;*/
 		}
 	}	
 	Set = Eigen::MatrixXd(x_hat_min.size(),x_hat_min.size()+1);
 	Set.block(0,0,x_hat_min.size(),1) = x_hat_min;
 	Set.block(0,1,x_hat_min.size(),x_hat_min.size()) = P_min;
+
+	std::cout << "Num Landmarks: " << (x_hat_min.size() - 3)/2 << std::endl;
 	return Set;
 }
 
