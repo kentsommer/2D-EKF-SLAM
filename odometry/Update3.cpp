@@ -218,10 +218,11 @@ Eigen::MatrixXd KalmanFilter::Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 // 			std::cout << "Covarinace: "<< std::endl;
 // 			std::cout << P_min << std::endl;
 		}
+		tempTrans = 0.5*(P_min + P_min.transpose());
+		P_min = tempTrans;
 	}
 	
-	tempTrans = 0.5*(P_min + P_min.transpose());
-	P_min = tempTrans;	
+		
 	
 	Set = Eigen::MatrixXd(x_hat_min.size(),x_hat_min.size()+1);
 	Set.block(0,0,x_hat_min.size(),1) = x_hat_min;
