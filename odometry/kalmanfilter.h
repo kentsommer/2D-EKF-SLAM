@@ -38,6 +38,8 @@ private:
 
   Eigen::MatrixXd Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
 
+  Eigen::MatrixXd Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
+
   Eigen::MatrixXd Update1(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
 
   Eigen::MatrixXd addFeature1(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::VectorXd newLand,Eigen::MatrixXd R);

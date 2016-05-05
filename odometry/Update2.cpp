@@ -227,11 +227,10 @@ Eigen::MatrixXd KalmanFilter::Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			
 		}
 		
-		std::cout << "Dist: " << Mahal_dist << std::endl;
 		
 		if(Opt_i == 0 || Mahal_dist > Gamma_max)
 		{
-			printf("%d: Initialize\n", j);
+			printf("%d: Initialize\n", (int)Mahal_dist);
 			newLand = G_pR_hat + C*z;
 			//call initialize()
 			Set = KalmanFilter::addFeature2(x_hat_min, P_min, newLand, R);
@@ -254,7 +253,7 @@ Eigen::MatrixXd KalmanFilter::Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 				continue;
 			}
 	
-			printf("%d: Update\n", j);
+			printf("%d: Update\n", (int)Mahal_dist);
 			
 			//efficient way(block Operation)
 			res = Opt_res;
@@ -276,6 +275,7 @@ Eigen::MatrixXd KalmanFilter::Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 // 			std::cout << "Covarinace: "<< std::endl;
 // 			std::cout << P_min << std::endl;
 		}
+		else printf("%d: Ignore\n", (int)Mahal_dist);
 	}	
 	
 	Set = Eigen::MatrixXd(x_hat_min.size(),x_hat_min.size()+1);

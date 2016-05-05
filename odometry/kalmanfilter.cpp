@@ -59,15 +59,15 @@ void KalmanFilter::doPropagation(double dt) {
 void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
   //Set Mahalanobis thresholds
-  int Gamma_max = 800;
-  int Gamma_min = 4;
+  int Gamma_max = 20;
+  int Gamma_min = 1;
   //Variable to hold out size
   int size;
   // Hold out matrices state and covariance
   Eigen::MatrixXd Set;
 
   //Set = Update1(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
-  Set = Update2(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
+  Set = Update3(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
   
   size = sqrt(Set.size());
   
@@ -80,8 +80,8 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
     knownLandmarks = new Eigen::MatrixXd((size-3)/2, 2);
   }
   
-  std::cout << "size is: " << size << std::endl;
-  std::cout << "starting from index 3, going up " << size-3 << " indexes." << std::endl;
+//   std::cout << "size is: " << size << std::endl;
+//   std::cout << "starting from index 3, going up " << size-3 << " indexes." << std::endl;
 
   (*state) = Set.block(0, 0, size, 1);
 

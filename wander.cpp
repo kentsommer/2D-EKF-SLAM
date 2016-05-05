@@ -231,13 +231,14 @@ int main(int argc, char **argv)
     std::vector<Feature> fvec;
     f->getFeatures(&fvec, nullptr);
     
-//     std::cout << "Updt\n";
     for (int i=0; i<fvec.size(); i++){
+      std::cout << "Updt\n";
       //updates
       Eigen::MatrixXd z_chunk(2,1);
       z_chunk << (fvec[i].x/1000.0), (fvec[i].y/1000.0);
       Eigen::MatrixXd R_chunk(2,2);
       R_chunk << 0.000625, 0, 0, 0.000625;
+//       R_chunk << 0.0220206449216767, 0, 0, 0.0220206449216767;
       ekf->doUpdate(z_chunk, R_chunk);
       
       double fx = fvec[i].x/1000.0;
