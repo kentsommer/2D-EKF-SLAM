@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 
   // setup new FeatureDetector
   FeatureDetector* f = new FeatureDetector(&sick);
-  f->start();
+  //f->start();
 
   // setup timers
   std::chrono::high_resolution_clock::time_point t1; 

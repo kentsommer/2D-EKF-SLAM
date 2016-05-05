@@ -236,8 +236,7 @@ void alignToWall(ArRobot* robot, ArSick* sick){
     float theta = (thLeft+thRight)/2;
     correctionAngle = getCorrectionAngleCombined(theta, distToRightWall, distToLeftWall);
 
-    //std::cout << "dist to left is: " << distToLeftWall << "\n";
-    //std::cout << "dist to right is: " << distToRightWall << "\n";
+    //std::cout << "correction angle is: " << correctionAngle << std::endl;
     if(distToRightWall > distToLeftWall){
       //robot->setDeltaHeading(correctionAngle-5);
       robot->setRotVel(-5.0);
@@ -259,9 +258,9 @@ void alignToWall(ArRobot* robot, ArSick* sick){
     for(int i=0;i<=15;i++){
       distToRightWall += getDistance(155, 25, thRight, i, readings)/15.0;
     }
-    correctionAngle = getCorrectionAngle(thRight, distToRightWall);
+    correctionAngle = getCorrectionAngleRight(thRight, distToRightWall);
 
-    //std::cout << "dist to right is: " << distToRightWall << "\n";
+    //std::cout << "correction angle is: " << correctionAngle << std::endl;
     if(distToRightWall < wallDistThresh){
       //robot->setDeltaHeading(correctionAngle+10); 
       robot->setRotVel(5.0);
@@ -281,9 +280,9 @@ void alignToWall(ArRobot* robot, ArSick* sick){
     for(int i=0;i<=15;i++){
       distToLeftWall += getDistance(25, 25, thLeft, i, readings)/15.0;
     }
-    correctionAngle = getCorrectionAngle(thLeft, distToLeftWall);
+    correctionAngle = getCorrectionAngleLeft(thLeft, distToLeftWall);
 
-    //std::cout << "dist to left is: " << distToLeftWall << "\n";
+    //std::cout << "correction angle is: " << correctionAngle << std::endl;
     if(distToLeftWall < wallDistThresh){
       //robot->setDeltaHeading(correctionAngle-10);
       robot->setRotVel(-5.0); 
@@ -313,7 +312,13 @@ float getCorrectionAngleCombined(float theta, float distRW, float distLW){
   return ((theta/3) * double(fabs(theta) > thThresh)) + (5 * double(distRW < threshDist)) - (5 * double(distLW < threshDist));
 }
 
-float getCorrectionAngle(float theta, float dist){
+float getCorrectionAngleRight(float theta, float dist){
+  float threshDist = 970;
+  float thThresh = 2;
+  return ((theta/3) * double(fabs(theta) > thThresh)) + (5 * double(dist < threshDist));
+}
+
+float getCorrectionAngleLeft(float theta, float dist){
   float threshDist = 970;
   float thThresh = 2;
   return ((theta/3) * double(fabs(theta) > thThresh)) + (5 * double(dist < threshDist));
