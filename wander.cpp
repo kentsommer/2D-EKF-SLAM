@@ -238,12 +238,8 @@ int main(int argc, char **argv)
       z_chunk << (fvec[i].x/1000.0), (fvec[i].y/1000.0);
       Eigen::MatrixXd R_chunk(2,2);
       R_chunk << 0.000625, 0, 0, 0.000625;
-<<<<<<< HEAD
 //       R_chunk << 0.0220206449216767, 0, 0, 0.0220206449216767;
-      ekf->doUpdate(z_chunk, R_chunk);
-=======
       //ekf->doUpdate(z_chunk, R_chunk);
->>>>>>> 3769ed7636be17346ed42eacf3fc6048c7119492
       
       double fx = fvec[i].x/1000.0;
       double fy = fvec[i].y/1000.0;
