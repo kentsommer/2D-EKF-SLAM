@@ -236,13 +236,21 @@ int main(int argc, char **argv)
       //updates
       Eigen::MatrixXd z_chunk(2,1);
       z_chunk << (fvec[i].x/1000.0), (fvec[i].y/1000.0);
+      Eigen::MatrixXd R(2,2);
       Eigen::MatrixXd R_chunk(2,2);
-      R_chunk << 0.000625, 0, 0, 0.000625;
-//       R_chunk << 0.0220206449216767, 0, 0, 0.0220206449216767;
-      //ekf->doUpdate(z_chunk, R_chunk);
-      
+      Eigen::MatrixXd G(2,2);
+      //R_chunk << 0.000625, 0, 0, 0.000625;
       double fx = fvec[i].x/1000.0;
       double fy = fvec[i].y/1000.0;
+      double dist = sqrt(fx*fx + fy*fy);
+      double bearing = atan2(fy, fx);
+
+      R << 0.0001, 0, 0, 0.0001;
+      G << cos(bearing), -dist * sin(bearing), sin(bearing), dist * cos(bearing);
+      //R_chunk << 0.0220206449216767, 0, 0, 0.0220206449216767;
+      R_chunk = G * R * G.transpose();
+      //ekf->doUpdate(z_chunk, R_chunk);
+      
       double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
       double newY = fx*sin(ekf->Phi) + fy*cos(ekf->Phi);
       

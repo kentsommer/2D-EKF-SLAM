@@ -145,12 +145,16 @@ Eigen::MatrixXd KalmanFilter::Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			}
 			
 		}
+
+		std::cout << "Dist GOOD: " << Mahal_dist << std::endl;
 		
-		std::cout << "Dist: " << Mahal_dist << std::endl;
+		if(Mahal_dist < 0.0){
+			std::cout << "Dist BAD: " << Mahal_dist << std::endl;
+		}
 		
 		if(Opt_i == 0 || Mahal_dist > Gamma_max)
 		{
-			printf("%d: Initialize\n", j);
+			//printf("%d: Initialize\n", j);
 
 			newLand = G_pR_hat + C*z;
 
@@ -185,7 +189,7 @@ Eigen::MatrixXd KalmanFilter::Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			P_min = Set.block(0,1,tempSize,tempSize);
 			*/
 		}
-		else if(Mahal_dist < Gamma_min)
+		else if(Mahal_dist < Gamma_min && Mahal_dist > 0)
 		{
 			//Calculating condition number
 			Eigen::JacobiSVD<Eigen::MatrixXd> svd(Opt_S.inverse());
@@ -193,11 +197,11 @@ Eigen::MatrixXd KalmanFilter::Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			
 			if(cond >= 80)
 			{
-				printf("%d: Bad measurement covariance\n", j);
+				//printf("%d: Bad measurement covariance\n", j);
 				continue;
 			}
 	
-			printf("%d: Update\n", j);
+			//printf("%d: Update\n", j);
 			
 			//efficient way(block Operation)
 			res = Opt_res;

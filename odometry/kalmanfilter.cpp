@@ -67,7 +67,7 @@ void KalmanFilter::doPropagation(double dt) {
 void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
   //Set Mahalanobis thresholds
-  int Gamma_max = 300;
+  int Gamma_max = 40;
   int Gamma_min = 1;
   //Variable to hold out size
   int size;
