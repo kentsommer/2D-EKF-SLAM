@@ -18,12 +18,20 @@ void* feature_save(void* args){
   while(1){
     std::vector<Feature> fvec;
     gettimeofday(&tp, NULL);
+    //TIMER
+/*    std::clock_t    start;
+    start = std::clock();*/
+
+
     f->getFeatures(&fvec, nullptr);
+      //TIMER
+    //std::cout << "Time for FEATURES: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+
     
     if (fvec.size() > 0) {
       milliseconds = tp.tv_sec*1000 + tp.tv_usec / 1000;
       outFeat << milliseconds << " ";
-      
+
       for (int i=0; i<fvec.size(); i++){
         outFeat << fvec[i].x << " " << fvec[i].y << " ";
       }

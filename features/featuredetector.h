@@ -7,7 +7,7 @@
 #include <cmath>
 #include <cstdio>
 #include <unistd.h>
-//#include <time.h>
+#include <ctime>
 #include <sys/time.h>
 #include "Aria.h"
 

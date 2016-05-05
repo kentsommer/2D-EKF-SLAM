@@ -40,8 +40,16 @@ void KalmanFilter::doPropagation(double dt) {
   Q << sigma_v, 0,
       0, sigma_w;
   Q = (v*v)*Q*Q;
+
+    //TIMER
+/*  std::clock_t    start;
+  start = std::clock();*/
+
 //   Set = Propagate(x_hat_min, m, 0.1, 0.01, Q, 1);
   Set = Propagate(*state, *covariance, v, w, Q, dt);
+
+  //TIMER
+  //std::cout << "Time for propagate: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
   
   // and parse them out to state vector and covariance matrix
   (*state) = Set.block(0,0,n,1);
@@ -66,8 +74,16 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
   // Hold out matrices state and covariance
   Eigen::MatrixXd Set;
 
+  //TIMER
+/*  std::clock_t    start;
+  start = std::clock();*/
+
   //Set = Update1(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
   Set = Update3(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
+
+  //TIMER
+  //std::cout << "Time for update: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+
   
   size = sqrt(Set.size());
   

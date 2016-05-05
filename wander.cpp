@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 
   // setup new FeatureDetector
   FeatureDetector* f = new FeatureDetector(&sick);
-//   f->start();
+  f->start();
 
   // setup timers
   std::chrono::high_resolution_clock::time_point t1; 
@@ -232,7 +232,7 @@ int main(int argc, char **argv)
     f->getFeatures(&fvec, nullptr);
     
     for (int i=0; i<fvec.size(); i++){
-      std::cout << "Updt\n";
+      //std::cout << "Updt\n";
       //updates
       Eigen::MatrixXd z_chunk(2,1);
       z_chunk << (fvec[i].x/1000.0), (fvec[i].y/1000.0);
