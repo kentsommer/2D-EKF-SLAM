@@ -29,8 +29,9 @@ while(1)
         newA=dlmread('../data/odom/odomRun.txt','',Odomrunlength,0);
         Odomrunbytesize=Odomrunfinfo.bytes;
         plot(newA(:,1),newA(:,2),'b*');
-        Odomrun=[Odomrun;newA];
-        Odomrunlength=size(Odomrun,1);
+        %Odomrun=[Odomrun;newA];
+        %Odomrunlength=size(Odomrun,1);
+        Odomrunlength=Odomrunlength+size(newA,1);
         
     end
      Scaninfo=dir('../data/scan/scanRun.txt');
@@ -38,8 +39,9 @@ while(1)
         newScan=dlmread('../data/scan/scanRun.txt','',Scanlength,0);
         Scanbytesize=Scaninfo.bytes;
         plot(newScan(:,1),newScan(:,2),'r*');
-        Scan=[Scan;newScan];
-        Scanlength=size(Scanlength,1);
+        %Scan=[Scan;newScan];
+        %Scanlength=size(Scanlength,1);
+        Scanlength=Scanlength+size(newScan,1);
     end
     
     Featuresinfo=dir('../data/features/featuresRun.txt');
@@ -47,8 +49,9 @@ while(1)
         newFeature=dlmread('../data/features/featuresRun.txt','',Scanlength,0);
         Featuresbytesize=Featuresinfo.bytes;
         plot(newFeature(:,1),newFeature(:,2),'g*');
-        Features=[Features;newFeature];
-        Featureslength=size(Featureslength,1);
+        %Features=[Features;newFeature];
+        %Featureslength=size(Featureslength,1);
+        Featureslength=Featureslength+size(newFeature,1);
     end
         
     
