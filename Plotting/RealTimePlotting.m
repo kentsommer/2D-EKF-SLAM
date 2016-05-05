@@ -21,6 +21,12 @@ Features=[];
 Featuresbytesize=0;
 Featureslength=0;
 
+V=VideoWriter('video.avi');
+V.FrameRate=1;
+open(V);
+
+
+
 figure(1)
 hold on;
 while(1)
@@ -59,5 +65,7 @@ while(1)
     
     
     pause(1)
-
+    currFrame = getframe;
+    writeVideo(V,currFrame)
 end
+close(V)
