@@ -189,9 +189,9 @@ int main(int argc, char **argv)
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
 
-  robot.lock();
+/*  robot.lock();
   robot.setVel(250);
-  robot.unlock();
+  robot.unlock();*/
 
 
   // setup new FeatureDetector
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
 
   // setup movement controller and start it
   MovementController* mov = new MovementController(&robot, &sick);
-  //mov->start();
+  mov->start();
   std::cout << "Started\n";
 
 

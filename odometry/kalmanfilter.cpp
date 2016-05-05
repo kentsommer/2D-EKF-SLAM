@@ -28,7 +28,7 @@ void KalmanFilter::doPropagation(double dt) {
   int n = (*state).size();          //size of state vector, #of Landmark = (n-3)/2
 
   double v =V/1000.0;
-  double w = RTV + 0.01;
+  double w = RTV + 0.01; //Correct for that awesome *joke* turning that the robot can't sense
   double sigma_v = 0.01;
   double sigma_w = 0.04;
   

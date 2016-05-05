@@ -24,7 +24,7 @@ public:
   double NO_COMPASS = 100.0;
   
   static const int MAX_DIST = HoughTransform::MAX_DIST;
-  static const int MIN_DIST = 1000 * 1000;
+  static const int MIN_DIST = 0;//1000 * 1000;
   static const int MIN_POINTS = 3;  //minimum number of points needed for a line segment
   static const int POINT_DIST = 600; //distance between points on same line segment (mm)
   
