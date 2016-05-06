@@ -50,7 +50,7 @@ Eigen::MatrixXd KalmanFilter::Propagate(Eigen::VectorXd x_hat_plus, Eigen::Matri
 	
 	G << -dt*cos(ori), 0,
 		-dt*sin(ori), 0,
-		0, 1;
+		0, -dt;
 	
 
 	// Propagate Covariance
