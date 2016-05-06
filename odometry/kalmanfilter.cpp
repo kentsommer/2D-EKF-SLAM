@@ -28,7 +28,7 @@ void KalmanFilter::doPropagation(double dt, std::ofstream& file) {
   int n = (*state).size();          //size of state vector, #of Landmark = (n-3)/2
 
   double v =V/1000.0;
-  double w = RTV;// + 0.01; //Correct for that awesome *joke* turning that the robot can't sense
+  double w = RTV + 0.01; //Correct for that awesome *joke* turning that the robot can't sense
   double sigma_v = 0.01;
   double sigma_w = 0.04;
   
@@ -81,8 +81,8 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
   start = std::clock();*/
 
   //Set = Update1(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
-  Set = Update3(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
   //Set = Update4(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
+  Set = Update3(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
 
   //TIMER
   //std::cout << "Time for update: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;

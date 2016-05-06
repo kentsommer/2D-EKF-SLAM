@@ -196,7 +196,7 @@ int main(int argc, char **argv)
   robot.comInt(ArCommands::SOUNDTOG, 0);
 
 /*  robot.lock();
-  robot.setVel(250);
+  robot.setVel2(250,150);
   robot.unlock();*/
 
 
