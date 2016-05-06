@@ -126,6 +126,16 @@ Eigen::MatrixXd KalmanFilter::Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			S = H_R*P_RR*H_R.transpose() + H_Li*P_LiR*H_R.transpose() + H_R*P_RLi*H_Li.transpose() + H_Li*P_LiLi*H_Li.transpose() + R;
 			tempTrans = 0.5*(S + S.transpose());
 			S = tempTrans;	
+
+			//Calculating condition number
+			Eigen::JacobiSVD<Eigen::MatrixXd> svd(S);
+			double cond = svd.singularValues()(0) / svd.singularValues()(svd.singularValues().size()-1);
+			
+			if(cond >= 80)
+			{
+				//printf("%d: Bad measurement covariance\n", j);
+				continue;
+			}
 							
 			temp_inv_S = S.inverse();
 			temp = res.transpose()*temp_inv_S*res;
