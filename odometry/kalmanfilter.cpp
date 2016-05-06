@@ -61,7 +61,7 @@ void KalmanFilter::doPropagation(double dt, std::ofstream& file) {
   
   file << Set(0,1) << " " << Set(0,2) << " " << Set(1,1) << " " << Set(1,2) << std::endl;
   //std::cout << Set(0,0) << " " << Set(1,1) << std::endl;
-  std::cout << Set(0,1) << " " << Set(0,2) << " " << Set(1,1) << " " << Set(1,2) << std::endl;
+  //std::cout << Set(0,1) << " " << Set(0,2) << " " << Set(1,1) << " " << Set(1,2) << std::endl;
   
   //printf("%f\n", sin(pi/2));
 }

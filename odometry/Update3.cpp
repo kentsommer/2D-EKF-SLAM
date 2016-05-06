@@ -156,11 +156,11 @@ Eigen::MatrixXd KalmanFilter::Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			
 		}
 
-		std::cout << "Dist GOOD: " << Mahal_dist << std::endl;
+		//std::cout << "Dist GOOD: " << Mahal_dist << std::endl;
 		
-		if(Mahal_dist < 0.0){
+/*		if(Mahal_dist < 0.0){
 			std::cout << "Dist BAD: " << Mahal_dist << std::endl;
-		}
+		}*/
 		
 		if(Opt_i == 0 || Mahal_dist > Gamma_max)
 		{
@@ -242,7 +242,7 @@ Eigen::MatrixXd KalmanFilter::Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 	Set.block(0,0,x_hat_min.size(),1) = x_hat_min;
 	Set.block(0,1,x_hat_min.size(),x_hat_min.size()) = P_min;
     
-    std::cout << "Num Landmarks: " << (x_hat_min.size() - 3)/2 << std::endl;
+    //std::cout << "Num Landmarks: " << (x_hat_min.size() - 3)/2 << std::endl;
 	return Set;
 }
 

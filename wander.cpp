@@ -251,6 +251,9 @@ int main(int argc, char **argv)
       double dist = sqrt(fx*fx + fy*fy);
       double bearing = atan2(fy, fx);
 
+/*      std::cout << "The bear haha haha...: " << bearing << std::endl;
+      std::cout << "The dist is          : " << dist << std::endl;*/
+
       R << 0.0001, 0, 0, 0.0001;
       G << cos(bearing), -dist * sin(bearing), sin(bearing), dist * cos(bearing);
       //R_chunk << 0.0220206449216767, 0, 0, 0.0220206449216767;
