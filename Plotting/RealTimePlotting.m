@@ -9,6 +9,9 @@ A=dlmread('odomRun.txt');
 %}
 clear all
 close all
+
+savevideo=0;
+
 Odomrun=[];
 Odomrunbytesize=0;
 Odomrunlength=0;
@@ -20,17 +23,23 @@ Scanlength=0;
 Features=[];
 Featuresbytesize=0;
 Featureslength=0;
-
+if savevideo
 V=VideoWriter('video.avi');
-V.FrameRate=1;
+V.FrameRate=10;
 open(V);
+end
 
-
+Pxy=[];
+Pxybytesize=0;
+Pxylength=0;
+Ellipseplot=plot(0,0,'MarkerSize', 0.00001);
+currXY=[0;0];
 
 figure(1)
 hold on;
 while(1)
     Odomrunfinfo=dir('../data/odom/odomRun.txt');
+    if ~isempty(Odomrunfinfo.bytes)
     if Odomrunfinfo.bytes>Odomrunbytesize
         newA=dlmread('../data/odom/odomRun.txt','',Odomrunlength,0);
         Odomrunbytesize=Odomrunfinfo.bytes;
@@ -38,10 +47,12 @@ while(1)
         %Odomrun=[Odomrun;newA];
         %Odomrunlength=size(Odomrun,1);
         Odomrunlength=Odomrunlength+size(newA,1);
-        
+        currXY=[newA(end,1);newA(end,2)];
     end
+end
      Scaninfo=dir('../data/scan/scanRun.txt');
-    if Scaninfo.bytes>Scanbytesize
+    if ~isempty(Scaninfo.bytes)
+     if Scaninfo.bytes>Scanbytesize
         newScan=dlmread('../data/scan/scanRun.txt','',Scanlength,0);
         Scanbytesize=Scaninfo.bytes;
         plot(newScan(:,1),newScan(:,2),'r*');
@@ -49,23 +60,45 @@ while(1)
         %Scanlength=size(Scanlength,1);
         Scanlength=Scanlength+size(newScan,1);
     end
-    
+    end
     Featuresinfo=dir('../data/features/featuresRun.txt');
+    if ~isempty(Featuresinfo.bytes)
     if Featuresinfo.bytes>Featuresbytesize
-        newFeature=dlmread('../data/features/featuresRun.txt','',Scanlength,0);
+        newFeature=dlmread('../data/features/featuresRun.txt','',Featureslength,0);
         Featuresbytesize=Featuresinfo.bytes;
         plot(newFeature(:,1),newFeature(:,2),'g*');
         %Features=[Features;newFeature];
         %Featureslength=size(Featureslength,1);
         Featureslength=Featureslength+size(newFeature,1);
     end
+    end    
+    
+    
+    Pxyinfo=dir('../data/cov/covRun.txt');
+    if ~isempty(Pxyinfo.bytes)
+    if Pxyinfo.bytes>Pxybytesize
+        %newA=dlmread('../data/odom/odomRun.txt','',Odomrunlength,0);
+       %newA=dlmread('../data/odom/odomRun.txt','',Odomrunlength,0);
+        NewPxy=dlmread('../data/cov/covRun.txt','',Pxylength,0);
+        Pxy=[NewPxy(end,1),NewPxy(end,2);NewPxy(end,3),NewPxy(end,4)];
         
+        Pxybytesize=Pxyinfo.bytes;
+        
+        %Odomrun=[Odomrun;newA];
+        %Odomrunlength=size(Odomrun,1);
+        Pxylength=Pxylength+size(NewPxy,1);
+        delete( Ellipseplot)
+       [EllipseX,EllipseY]=  plot_error_ellipse_plotting(currXY,Pxy);
+       Ellipseplot=plot(EllipseX,EllipseY,'g');
+    end
+    end
     
-    
-    
-    
-    pause(1)
+    pause(.1)
+    if savevideo
     currFrame = getframe;
     writeVideo(V,currFrame)
+    end
 end
+if savevideo
 close(V)
+end

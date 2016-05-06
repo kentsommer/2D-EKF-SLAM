@@ -103,10 +103,16 @@ int main(int argc, char **argv)
   std::string featuresfileName = "./data/features/featuresRun.txt";
   std::string featuresPath = featuresfileName; // + dateTime;
   std::remove(featuresPath.c_str());
+  	// covariance
+  std::ofstream covFile;
+  std::string covfileName = "./data/cov/covRun.txt";
+  std::string covPath = covfileName;
+  std::remove(covPath.c_str());
     //Open all out files
   odomFile.open(odomPath);
   featuresFile.open(featuresPath);
   scanFile.open(scanPath);
+  covFile.open(covPath);
 
   Aria::init();
   ArArgumentParser argParser(&argc, argv);
@@ -225,7 +231,7 @@ int main(int argc, char **argv)
     t2 = std::chrono::high_resolution_clock::now();
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     dt = (double)microseconds / 1000000.0;
-    ekf->doPropagation(dt);
+    ekf->doPropagation(dt, covFile);
     
     //measurements
     std::vector<Feature> fvec;
@@ -249,7 +255,7 @@ int main(int argc, char **argv)
       G << cos(bearing), -dist * sin(bearing), sin(bearing), dist * cos(bearing);
       //R_chunk << 0.0220206449216767, 0, 0, 0.0220206449216767;
       R_chunk = G * R * G.transpose();
-      //ekf->doUpdate(z_chunk, R_chunk);
+      ekf->doUpdate(z_chunk, R_chunk);
       
       double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
       double newY = fx*sin(ekf->Phi) + fy*cos(ekf->Phi);
@@ -296,6 +302,7 @@ int main(int argc, char **argv)
   odomFile.close();
   featuresFile.close();
   scanFile.close();
+  covFile.close();
   return 0;
   
   

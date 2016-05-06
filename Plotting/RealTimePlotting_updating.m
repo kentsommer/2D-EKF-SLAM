@@ -70,17 +70,17 @@ while(1)
     end
         
     
-    Pxyinfo=dir('odomRun.txt');
+    Pxyinfo=dir('../data/cov/covRun.txt');
     if Pxyinfo.bytes>Pxybytesize
         %newA=dlmread('../data/odom/odomRun.txt','',Odomrunlength,0);
-        NewPxy=dlmread('odomRun.txt','',Odomrunlength,0);
+        NewPxy=dlmread('odomRun.txt','',Pxylength,0);
         Pxy=[NewPxy(end,1),NewPxy(end,2);NewPxy(end,3),NewPxy(end,4)];
         
         Pxybytesize=Pxyinfo.bytes;
         
         %Odomrun=[Odomrun;newA];
         %Odomrunlength=size(Odomrun,1);
-        Odomrunlength=Odomrunlength+size(newA,1);
+        Pxylength=Pxylength+size(NewPxy,1);
         delete( Ellipseplot)
        [EllipseX,EllipseY]=  plot_error_ellipse_plotting(currXY,Pxy,'y');
        Ellipseplot=plot(EllipseX,EllipseY,'r');

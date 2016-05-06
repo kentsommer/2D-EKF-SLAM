@@ -10,6 +10,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <ctime>
+#include <fstream>
 
 #include "Aria.h"
 
@@ -26,7 +27,7 @@ public:
   Eigen::MatrixXd* knownLandmarks;
   
   KalmanFilter(ArRobot* robot);
-  void doPropagation(double dt);
+  void doPropagation(double dt, std::ofstream& file);
   void doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk);
   
 private:
@@ -40,6 +41,8 @@ private:
   Eigen::MatrixXd Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
 
   Eigen::MatrixXd Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
+
+  Eigen::MatrixXd Update4(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
 
   Eigen::MatrixXd Update1(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
 

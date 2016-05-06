@@ -15,6 +15,7 @@
 
 typedef struct Feature{
   double x, y;
+  double dist, bear;
 } Feature;
 
 

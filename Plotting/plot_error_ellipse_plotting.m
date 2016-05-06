@@ -22,7 +22,7 @@ x_r  = a*cos( phigrid );
 y_r  = b*sin( phigrid );
 
 ellipse=[x_r;y_r]'*[cos(phi),sin(phi);-sin(phi),cos(phi)];
-ellipse(:,1)
+ellipse(:,1);
 EllipseX=ellipse(:,1) + x_hat_plus(1,i);
 EllipseY=ellipse(:,2) + x_hat_plus(2,i);
 

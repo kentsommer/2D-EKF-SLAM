@@ -12,7 +12,7 @@ KalmanFilter::KalmanFilter(ArRobot* robot){
 }
 
 
-void KalmanFilter::doPropagation(double dt) {
+void KalmanFilter::doPropagation(double dt, std::ofstream& file) {
   // std::cout << "\nX_hat_min =" << std::endl;
   // std::cout << (*state) << std::endl << std::endl;
   //std::cout << "P_min =" << std::endl;
@@ -28,7 +28,7 @@ void KalmanFilter::doPropagation(double dt) {
   int n = (*state).size();          //size of state vector, #of Landmark = (n-3)/2
 
   double v =V/1000.0;
-  double w = RTV + 0.01; //Correct for that awesome *joke* turning that the robot can't sense
+  double w = RTV;// + 0.01; //Correct for that awesome *joke* turning that the robot can't sense
   double sigma_v = 0.01;
   double sigma_w = 0.04;
   
@@ -59,7 +59,9 @@ void KalmanFilter::doPropagation(double dt) {
   Y = (*state)(1);
   Phi = (*state)(2);
   
-  
+  file << Set(0,1) << " " << Set(0,2) << " " << Set(1,1) << " " << Set(1,2) << std::endl;
+  //std::cout << Set(0,0) << " " << Set(1,1) << std::endl;
+  std::cout << Set(0,1) << " " << Set(0,2) << " " << Set(1,1) << " " << Set(1,2) << std::endl;
   
   //printf("%f\n", sin(pi/2));
 }
@@ -67,7 +69,7 @@ void KalmanFilter::doPropagation(double dt) {
 void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
   //Set Mahalanobis thresholds
-  int Gamma_max = 40;
+  int Gamma_max = 90;
   int Gamma_min = 1;
   //Variable to hold out size
   int size;
@@ -80,6 +82,7 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
   //Set = Update1(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
   Set = Update3(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
+  //Set = Update4(*state, *covariance, z_chunk, R_chunk, Gamma_max, Gamma_min);
 
   //TIMER
   //std::cout << "Time for update: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
