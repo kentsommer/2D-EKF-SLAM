@@ -155,14 +155,14 @@ Eigen::MatrixXd KalmanFilter::Update4(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			}
 			
 		}
-
+/*
 		std::cout << "Dist GOOD: " << Mahal_dist << std::endl;
 		std::cout << "Opt_I: " << Opt_i << std::endl;
 		std::cout << "should add current: " << (Opt_i == 0 || (Mahal_dist > Gamma_max && Mahal_dist < 10000)) << std::endl;
 		
 		if(Mahal_dist < 0.0){
 			std::cout << "Dist BAD: " << Mahal_dist << std::endl;
-		}
+		}*/
 		
 		if(n_lm == 0 || (Mahal_dist > Gamma_max && Mahal_dist < 10000))
 		{
@@ -175,6 +175,9 @@ Eigen::MatrixXd KalmanFilter::Update4(Eigen::VectorXd x_hat_min, Eigen::MatrixXd
 			x_hat_min = Eigen::VectorXd(stateSize+2);
 			x_hat_min.head(stateSize) = tempVector;
 			x_hat_min.tail(2) = newLand;
+
+			std::cout << "NEW LANDMARK ADDED AT: " << newLand << std::endl;
+			std::cout << "MAHAL DISTANCE IS: " << Mahal_dist << std::endl;
             
             H_R = Eigen::MatrixXd(2,3);
 			// Update Covariance
