@@ -23,7 +23,7 @@ void* feature_save(void* args){
     start = std::clock();*/
 
 
-    f->getFeatures(&fvec, nullptr);
+    f->getFeatures(&fvec, nullptr, 0);
       //TIMER
     //std::cout << "Time for FEATURES: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
 
@@ -89,13 +89,16 @@ FeatureDetector::~FeatureDetector(){
 }
 
 
-int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCompass){
+int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCompass, double curPhi){
   sick->lockDevice();
     std::vector<ArSensorReading> *r = sick->getRawReadingsAsVector();
     std::vector<ArSensorReading> readings(*r);
+    ArTime curTime = sick->getLastReadingTime();
   sick->unlockDevice();
   
   if (readings.size() == 0) return 0;
+  if (curTime.isAt(Last_Time)) return 0;
+  Last_Time = curTime;
   
   std::vector<struct houghLine> houghLines;
   this->hough->getLines(&readings, &houghLines);
@@ -125,7 +128,7 @@ int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCo
 //     std::cout << (*featVec)[i].y << std::endl;;
 //   }
   
-//   (*structCompass) = getStructCompass(&lineSegments);
+  (*structCompass) = getStructCompass(&houghLines, curPhi);
   return numf;
 }
 
@@ -285,12 +288,6 @@ int FeatureDetector::fitLineSegments(std::vector<ArSensorReading> *readings,
 
 
 
-double FeatureDetector::getStructCompass(std::vector<struct lineSegment> *segments){
-  return NO_COMPASS;
-}
-
-
-
 int FeatureDetector::extractCorners(std::vector<Feature> *featVec, std::vector<struct lineSegment> *segments){
   int numSeg = segments->size();
   
@@ -355,6 +352,64 @@ int FeatureDetector::extractCorners(std::vector<Feature> *featVec, std::vector<s
 }
 
 
+
+double FeatureDetector::getStructCompass(std::vector<struct houghLine> *lines, double curPhi){
+  std::vector<struct compassgroup> groups;
+  
+  //merge all lines into compassgroups
+  for (int i=0; i<lines->size(); i++){
+    double curTheta = fmod((*lines)[i].theta, 1.570796327);
+    if (curTheta >  0.7853981634) curTheta -= 1.570796327;
+    double curWeight = (*lines)[i].weight;
+    
+    bool merge = false;
+    
+    for (int j=0; j<groups.size(); j++){
+      double mergeTheta = fmod((groups[j].theta / groups[j].weight), 1.570796327);
+      if (mergeTheta >  0.7853981634) mergeTheta -= 1.570796327;
+      double thetaDiff = fabs(curTheta - mergeTheta);
+      
+      if (thetaDiff < COMPASS_THRESH){
+        groups[j].theta += curTheta*curWeight;
+        groups[j].weight += curWeight;
+        merge = true;
+      }
+      
+    }
+    
+    if (!merge){
+      struct compassgroup g;
+      g.theta = curTheta*curWeight;
+      g.weight = curWeight;
+      groups.push_back(g);
+    }
+  }
+  
+  struct compassgroup max;
+  double maxweight = 0;
+  for (int i=0; i<groups.size(); i++){
+    if (groups[i].weight > maxweight){
+      max = groups[i];
+      maxweight = max.weight;
+    }
+  }
+  
+  double cardinal = fmod(-max.theta / maxweight, 1.570796327);
+  if (cardinal > 0.7853981634) cardinal -= 1.570796327;
+  curPhi = fmod(curPhi, 6.283185307);
+  
+  if ((curPhi < 0.7853981634) || (curPhi > 5.497787144)){
+    return cardinal;
+  } else if ((curPhi > 0.7853981634) || (curPhi < 2.35619449)){
+    return cardinal + 1.570796327;
+  } else if ((curPhi < 3.926990817) || (curPhi > 2.35619449)){
+    return cardinal + 3.141592654;
+  } else if ((curPhi > 3.926990817) || (curPhi < 5.497787144)){
+    return cardinal + 4.71238898;
+  } else {
+    return NO_COMPASS;
+  }
+}
 
 
 

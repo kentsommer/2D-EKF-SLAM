@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 
   // setup new Kalman Filter
   KalmanFilter* ekf = new KalmanFilter(&robot);
-
+  //usleep(300000);
 
   
   while (1){
@@ -235,7 +235,9 @@ int main(int argc, char **argv)
     
     //measurements
     std::vector<Feature> fvec;
-    f->getFeatures(&fvec, nullptr);
+    double compass;
+    f->getFeatures(&fvec, &compass, ekf->Phi);
+//     std::cout << "Cardinal: " << compass * 180.0/3.141592654 << std::endl;
     
     for (int i=0; i<fvec.size(); i++){
       //std::cout << "Updt\n";
@@ -258,6 +260,7 @@ int main(int argc, char **argv)
       G << cos(bearing), -dist * sin(bearing), sin(bearing), dist * cos(bearing);
       //R_chunk << 0.0220206449216767, 0, 0, 0.0220206449216767;
       R_chunk = G * R * G.transpose();
+      std::cout << "Update\n";
       ekf->doUpdate(z_chunk, R_chunk);
       
       double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
@@ -290,6 +293,8 @@ int main(int argc, char **argv)
       
       loopTime = 0.0;
     }
+    
+    //usleep(300000);
     
     
     //std::cout << "We have a feature at" << std::endl;
