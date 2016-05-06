@@ -32,10 +32,12 @@ public:
   double CORNER_THETA = 22.0 * 3.141592654/180.0;   //min angle between segments making a corner
   static const int CORNER_DIST = 90000; //squared distance between segment and feature (mm)
   
+  double COMPASS_THRESH = 10 * 3.141592654/180.0;
+  
   FeatureDetector(ArSick* sick);
   ~FeatureDetector();
   
-  int getFeatures(std::vector<Feature> *featVec, double* structCompass);
+  int getFeatures(std::vector<Feature> *featVec, double* structCompass, double curPhi);
   void start();
   
 private:
@@ -47,7 +49,13 @@ private:
     int numPoints;
     struct lineSegment* next;
   };
+  
+  struct compassgroup{
+    double theta;
+    double weight;
+  };
 
+  ArTime Last_Time;
   ArSick* sick;
   HoughTransform* hough;
   
@@ -55,7 +63,7 @@ private:
                       std::vector<struct houghLine> *lines, 
                       std::vector<struct lineSegment> *segments);
     
-  double getStructCompass(std::vector<struct lineSegment> *segments);
+  double getStructCompass(std::vector<struct houghLine> *lines, double curPhi);
   int extractCorners(std::vector<Feature> *featVec, std::vector<struct lineSegment> *segments);
 };
 
