@@ -28,7 +28,7 @@ public:
   Eigen::MatrixXd* knownLandmarks;
   
   KalmanFilter(ArRobot* robot);
-  void doPropagation(double dt, std::ofstream& file);
+  void doPropagation(double dt, std::ofstream& covFile, std::ofstream& knownfeaturesFile);
   void doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk);
   void doUpdateCompass(double z, double R);
   

@@ -12,7 +12,7 @@ KalmanFilter::KalmanFilter(ArRobot* robot){
 }
 
 
-void KalmanFilter::doPropagation(double dt, std::ofstream& covFile) {
+void KalmanFilter::doPropagation(double dt, std::ofstream& covFile, std::ofstream& knownfeaturesFile) {
   
   robot->lock();
     double V = robot->getVel();
@@ -49,6 +49,16 @@ void KalmanFilter::doPropagation(double dt, std::ofstream& covFile) {
 
   //Write robot covariance to file
   covFile << Set(0,1) << " " << Set(0,2) << " " << Set(1,1) << " " << Set(1,2) << std::endl;
+
+  int n_lm = ((*state).size() - 3) / 2;
+  if (n_lm > 0)
+  {
+    for (int i = 1; i < n_lm; i++)
+      {
+        knownfeaturesFile << Set(3+i,0) << " " << Set(4+i,0)<<std::endl;
+      }
+      
+  }
 }
 
 void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {

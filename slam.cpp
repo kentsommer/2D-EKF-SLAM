@@ -27,11 +27,16 @@ int main(int argc, char **argv)
   std::string scanfileName = "./data/scan/scanRun.txt";
   std::string scanPath = scanfileName;
   std::remove(scanPath.c_str());
-    //features
+    //features (all)
   std::ofstream featuresFile;
   std::string featuresfileName = "./data/features/featuresRun.txt";
   std::string featuresPath = featuresfileName; 
   std::remove(featuresPath.c_str());
+     //known features (in state)
+  std::ofstream knownfeaturesFile;
+  std::string knownfeaturesfileName = "./data/features/knownfeaturesRun.txt";
+  std::string knownfeaturesPath = knownfeaturesfileName;
+  std::remove(knownfeaturesPath.c_str());
       // covariance
   std::ofstream covFile;
   std::string covfileName = "./data/cov/covRun.txt";
@@ -40,6 +45,7 @@ int main(int argc, char **argv)
     //Open all out files
   odomFile.open(odomPath);
   featuresFile.open(featuresPath);
+  knownfeaturesFile.open(knownfeaturesPath);
   scanFile.open(scanPath);
   covFile.open(covPath);
 
@@ -127,7 +133,7 @@ int main(int argc, char **argv)
     t2 = std::chrono::high_resolution_clock::now();
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     dt = (double)microseconds / 1000000.0;
-    ekf->doPropagation(dt, covFile);
+    ekf->doPropagation(dt, covFile, knownfeaturesFile);
     
     //Get the features
     std::vector<Feature> fvec;
@@ -203,6 +209,7 @@ int main(int argc, char **argv)
   //Close all files
   odomFile.close();
   featuresFile.close();
+  knownfeaturesFile.close();
   scanFile.close();
   covFile.close();
 
