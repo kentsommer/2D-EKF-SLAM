@@ -10,7 +10,7 @@ A=dlmread('odomRun.txt');
 clear all
 close all
 
-savevideo=1;
+savevideo=0;
 
 Odomrun=[];
 Odomrunbytesize=0;
