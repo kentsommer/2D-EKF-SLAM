@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
+import datetime
 import numpy as np
 import matplotlib.pyplot as plt
+
+now = datetime.datetime.now()
+outpath = './maps/' + now.strftime("%Y-%m-%d %H:%M") + '.png'
 
 with open("./data/odom/odomRun.txt") as od:
     odomData = od.read()
@@ -39,5 +43,7 @@ ax1.plot(odx,ody, 'bo', label='the odomData')
 ax1.plot(fex, fey,'go', label='the featureData')
 
 leg = ax1.legend()
+
+fig.savefig(outpath)
 
 plt.show()
