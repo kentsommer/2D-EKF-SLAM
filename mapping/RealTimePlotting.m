@@ -1,3 +1,4 @@
+function [] = action()
 %{
 sizeA=[2 inf];
 formatSpec = '%f %f';
@@ -10,7 +11,9 @@ A=dlmread('odomRun.txt');
 clear all
 close all
 
-savevideo=0;
+savevideo=1;
+
+cleanupObj = onCleanup(@() cleanMeUp(savevideo)); %handle cntrl-c event
 
 Odomrun=[];
 Odomrunbytesize=0;
@@ -129,6 +132,13 @@ while(1)
     writeVideo(V,currFrame)
     end
 end
-if savevideo
-close(V)
+
+function cleanMeUp(f)
+    % saves data to file (or could save to workspace)
+    fprintf('saving stuff to file\n');
+    if f
+        close(V)
+    end
+end
+
 end
