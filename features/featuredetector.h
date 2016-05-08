@@ -55,6 +55,7 @@ private:
     double weight;
   };
 
+  double COMPASS_OFFSET = 100.0;
   ArTime Last_Time;
   ArSick* sick;
   HoughTransform* hough;

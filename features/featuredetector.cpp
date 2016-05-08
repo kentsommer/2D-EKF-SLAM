@@ -96,8 +96,14 @@ int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCo
     ArTime curTime = sick->getLastReadingTime();
   sick->unlockDevice();
   
-  if (readings.size() == 0) return 0;
-  if (curTime.isAt(Last_Time)) return 0;
+  if (readings.size() == 0){
+    (*structCompass) = NO_COMPASS;
+    return 0;
+  }
+  if (curTime.isAt(Last_Time)){
+    (*structCompass) = NO_COMPASS;
+    return 0;
+  }
   Last_Time = curTime;
   
   std::vector<struct houghLine> houghLines;
@@ -353,20 +359,19 @@ int FeatureDetector::extractCorners(std::vector<Feature> *featVec, std::vector<s
 
 
 
+//find and return the estimated angle of the robot based on structual compass
 double FeatureDetector::getStructCompass(std::vector<struct houghLine> *lines, double curPhi){
   std::vector<struct compassgroup> groups;
-  
+    
   //merge all lines into compassgroups
   for (int i=0; i<lines->size(); i++){
-    double curTheta = fmod((*lines)[i].theta, 1.570796327);
-    if (curTheta >  0.7853981634) curTheta -= 1.570796327;
+    double curTheta = (*lines)[i].theta - 1.570796327 * floor((*lines)[i].theta / 1.570796327);
     double curWeight = (*lines)[i].weight;
     
     bool merge = false;
     
     for (int j=0; j<groups.size(); j++){
-      double mergeTheta = fmod((groups[j].theta / groups[j].weight), 1.570796327);
-      if (mergeTheta >  0.7853981634) mergeTheta -= 1.570796327;
+      double mergeTheta = groups[j].theta / groups[j].weight;
       double thetaDiff = fabs(curTheta - mergeTheta);
       
       if (thetaDiff < COMPASS_THRESH){
@@ -385,8 +390,9 @@ double FeatureDetector::getStructCompass(std::vector<struct houghLine> *lines, d
     }
   }
   
+  //get compassgroup with largest weight
   struct compassgroup max;
-  double maxweight = 0;
+  double maxweight = 0.0;
   for (int i=0; i<groups.size(); i++){
     if (groups[i].weight > maxweight){
       max = groups[i];
@@ -394,29 +400,34 @@ double FeatureDetector::getStructCompass(std::vector<struct houghLine> *lines, d
     }
   }
   
-  double cardinal = fmod(-max.theta / maxweight, 1.570796327);
-  if (cardinal > 0.7853981634) cardinal -= 1.570796327;
-  curPhi = fmod(curPhi, 6.283185307);
+  //if no groups, can't find compass value
+  if (maxweight == 0.0) return NO_COMPASS;
   
-  if ((curPhi < 0.7853981634) || (curPhi > 5.497787144)){
-    return cardinal;
-  } else if ((curPhi > 0.7853981634) || (curPhi < 2.35619449)){
-    return cardinal + 1.570796327;
-  } else if ((curPhi < 3.926990817) || (curPhi > 2.35619449)){
-    return cardinal + 3.141592654;
-  } else if ((curPhi > 3.926990817) || (curPhi < 5.497787144)){
-    return cardinal + 4.71238898;
-  } else {
-    return NO_COMPASS;
-  }
+  //get estimated angle (based on structural compass) of robot mod 90 degrees
+  double cardinal = -(max.theta / maxweight);
+  if (COMPASS_OFFSET == 100.0) COMPASS_OFFSET = cardinal;
+  cardinal -= COMPASS_OFFSET;
+  cardinal -= 1.570796327 * floor(cardinal / 1.570796327);
+  
+  //get robot angle mod 360 degrees
+  curPhi -= 6.283185307 * floor(curPhi / 6.283185307);
+  
+  //get errors for all possible directions of robot (0, 90, 180, 360 degrees plus rollovers)
+  double e1 = fabs(curPhi - cardinal);
+  double e2 = fabs(curPhi - cardinal - 1.570796327);
+  double e3 = fabs(curPhi - cardinal - 3.141592654);
+  double e4 = fabs(curPhi - cardinal - 4.71238898);
+  double e5 = fabs(curPhi - cardinal - 6.283185307);
+  double e6 = fabs(curPhi - cardinal + 1.570796327);
+  
+  //return best estimate of robot's angle. If the error between the robot's angle and the
+    //structual compass value is more than 45 degrees, this WILL return bad values. There
+    //isn't any way to correct for this, though, so we have to hope we never get that much error
+  if ((e1 <= e2) && (e1 <= e3) && (e1 <= e4) && (e1 <= e5) && (e1 <= e6)) return cardinal;
+  else if ((e2 <= e3) && (e2 <= e4) && (e2 <= e5) && (e2 <= e6)) return cardinal + 1.570796327;
+  else if ((e3 <= e4) && (e3 <= e5) && (e3 <= e6)) return cardinal + 3.141592654;
+  else if ((e4 <= e5) && (e4 <= e6)) return cardinal + 4.71238898;
+  else if (e5 <= e6) return cardinal;
+  else return cardinal + 4.71238898;
 }
-
-
-
-
-
-
-
-
-
 

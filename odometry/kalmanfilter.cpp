@@ -27,7 +27,7 @@ void KalmanFilter::doPropagation(double dt, std::ofstream& file) {
   
   int n = (*state).size();          //size of state vector, #of Landmark = (n-3)/2
 
-  double v =V/1000.0;
+  double v = V/1000.0;
   double w = RTV + 0.01; //Correct for that awesome *joke* turning that the robot can't sense
   double sigma_v = 0.01;
   double sigma_w = 0.04;
@@ -69,8 +69,8 @@ void KalmanFilter::doPropagation(double dt, std::ofstream& file) {
 void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
   //Set Mahalanobis thresholds
-  int Gamma_max = 90;
-  int Gamma_min = 1;
+  int Gamma_max = 50;
+  int Gamma_min = 10;
   //Variable to hold out size
   int size;
   // Hold out matrices state and covariance
@@ -103,8 +103,9 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 //   std::cout << "starting from index 3, going up " << size-3 << " indexes." << std::endl;
 
   (*state) = Set.block(0, 0, size, 1);
-
   (*covariance) = Set.block(0, 1, size, size);
+  
+  Num_Landmarks = ((*state).size() - 3) / 2;
 
 /*  for (int i=0; i<(size-3)/2; i++){
 
@@ -117,3 +118,53 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
 
 }
+
+
+
+
+//run an update with structual compass
+void KalmanFilter::doUpdateCompass(double z, double R){
+  //get current direction mod 360 degrees as measurement estimate
+  double z_hat = (*state)(2);
+  z_hat -= 6.283185307 * floor(z_hat / 6.283185307);
+  
+  //get all possible residuals (accounting for 0 -> 360 degree rollovers (the bane of my existance!))
+  double res1 = z - z_hat;
+  double res2 = z - 6.283185307 - z_hat;
+  double res3 = z + 6.283185307 - z_hat;
+  
+  //get lowest residuals among all possible ones (assume we're close to measured value)
+  double res;
+  if ((fabs(res1) <= fabs(res2)) && (fabs(res1) <= fabs(res3))) res = res1;
+  else if (fabs(res2) <= fabs(res3)) res = res2;
+  else res = res3;
+  
+  //H matrix is just [1] for this measurement, so H * S * H_transpose is just the
+    //covariance of the robot's angle with itself
+  double S = (*covariance)(2,2) + R;
+  
+  //P * H_transpose just pulls out the phi column, calculate K from this
+  int size = (*state).size();
+  Eigen::MatrixXd K = (1/S) * (*covariance).block(0,2,size,1);
+  
+  //update state and covariance
+  (*state) = (*state) + (res * K);
+  (*covariance) = (*covariance) - S * K * K.transpose();
+  Eigen::MatrixXd tempTrans = 0.5 * ((*covariance) + (*covariance).transpose());
+  (*covariance) = tempTrans;
+  
+  //save state vals for easy lookup outside of function
+  X = (*state)(0);
+  Y = (*state)(1);
+  Phi = (*state)(2);
+}
+
+
+
+
+
+
+
+
+
+

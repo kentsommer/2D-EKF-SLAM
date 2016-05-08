@@ -24,11 +24,13 @@ public:
   double X = 0.0;
   double Y = 0.0;
   double Phi = 0.0;
+  int Num_Landmarks = 0;
   Eigen::MatrixXd* knownLandmarks;
   
   KalmanFilter(ArRobot* robot);
   void doPropagation(double dt, std::ofstream& file);
   void doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk);
+  void doUpdateCompass(double z, double R);
   
 private:
   ArRobot* robot;
@@ -38,17 +40,17 @@ private:
   
   Eigen::MatrixXd Propagate(Eigen::VectorXd x_hat_plus, Eigen::MatrixXd P_plus, double v_m, double w_m, Eigen::MatrixXd Q, double dt);
 
-  Eigen::MatrixXd Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
+//   Eigen::MatrixXd Update2(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
 
   Eigen::MatrixXd Update3(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
 
-  Eigen::MatrixXd Update4(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
+//   Eigen::MatrixXd Update4(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
 
-  Eigen::MatrixXd Update1(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
+//   Eigen::MatrixXd Update1(Eigen::VectorXd x_hat_min, Eigen::MatrixXd P_min, Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk, int Gamma_max, int Gamma_min);
 
-  Eigen::MatrixXd addFeature1(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::VectorXd newLand,Eigen::MatrixXd R);
+//   Eigen::MatrixXd addFeature1(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::VectorXd newLand,Eigen::MatrixXd R);
 
-  Eigen::MatrixXd addFeature2(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::VectorXd newLand,Eigen::MatrixXd R);
+//   Eigen::MatrixXd addFeature2(Eigen::VectorXd x_hat, Eigen::MatrixXd P, Eigen::VectorXd newLand,Eigen::MatrixXd R);
 };
 
 #endif // KALMANFILTER_H

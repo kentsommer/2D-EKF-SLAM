@@ -195,9 +195,9 @@ int main(int argc, char **argv)
   robot.enableMotors();
   robot.comInt(ArCommands::SOUNDTOG, 0);
 
-/*  robot.lock();
-  robot.setVel2(250,150);
-  robot.unlock();*/
+  /*robot.lock();
+  robot.setVel2(400,500);
+  robot.unlock();//*/
 
 
   // setup new FeatureDetector
@@ -237,31 +237,32 @@ int main(int argc, char **argv)
     std::vector<Feature> fvec;
     double compass;
     f->getFeatures(&fvec, &compass, ekf->Phi);
-//     std::cout << "Cardinal: " << compass * 180.0/3.141592654 << std::endl;
     
+    //update structual compass
+    if (compass != f->NO_COMPASS) {
+      std::cout << "Compass\n";
+      ekf->doUpdateCompass(compass, 0.000001);
+    }
+    
+    //update with landmarks
     for (int i=0; i<fvec.size(); i++){
-      //std::cout << "Updt\n";
       //updates
       Eigen::MatrixXd z_chunk(2,1);
       z_chunk << (fvec[i].x/1000.0), (fvec[i].y/1000.0);
       Eigen::MatrixXd R(2,2);
       Eigen::MatrixXd R_chunk(2,2);
       Eigen::MatrixXd G(2,2);
-      //R_chunk << 0.000625, 0, 0, 0.000625;
       double fx = fvec[i].x/1000.0;
       double fy = fvec[i].y/1000.0;
       double dist = sqrt(fx*fx + fy*fy);
       double bearing = atan2(fy, fx);
 
-/*      std::cout << "The bear haha haha...: " << bearing << std::endl;
-      std::cout << "The dist is          : " << dist << std::endl;*/
-
-      R << 0.0001, 0, 0, 0.0001;
+      R << 0.001, 0, 0, 0.001;
       G << cos(bearing), -dist * sin(bearing), sin(bearing), dist * cos(bearing);
-      //R_chunk << 0.0220206449216767, 0, 0, 0.0220206449216767;
       R_chunk = G * R * G.transpose();
-      std::cout << "Update\n";
+      std::cout << "Update: ";
       ekf->doUpdate(z_chunk, R_chunk);
+      std::cout << ekf->Num_Landmarks << std::endl;
       
       double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
       double newY = fx*sin(ekf->Phi) + fy*cos(ekf->Phi);
@@ -294,7 +295,7 @@ int main(int argc, char **argv)
       loopTime = 0.0;
     }
     
-    //usleep(300000);
+//     usleep(300000);
     
     
     //std::cout << "We have a feature at" << std::endl;
