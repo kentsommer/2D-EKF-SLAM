@@ -240,8 +240,8 @@ int main(int argc, char **argv)
     
     //update structual compass
     if (compass != f->NO_COMPASS) {
-      std::cout << "Compass\n";
-      ekf->doUpdateCompass(compass, 0.000001);
+      std::cout << "Compass: " << compass << std::endl;
+      ekf->doUpdateCompass(compass, 0.0005);
     }
     
     //update with landmarks
