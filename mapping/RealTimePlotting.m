@@ -1,3 +1,4 @@
+function [] = action()
 %{
 sizeA=[2 inf];
 formatSpec = '%f %f';
@@ -11,6 +12,8 @@ clear all
 close all
 
 savevideo=1;
+
+cleanupObj = onCleanup(@() cleanMeUp(savevideo)); %handle cntrl-c event
 
 Odomrun=[];
 Odomrunbytesize=0;
@@ -76,6 +79,8 @@ while(1)
         Scanlength=Scanlength+size(newScan,1);
     end
     end
+    
+    
     Featuresinfo=dir('../data/features/featuresRun.txt');
     if size(Featuresinfo,1)>0&&~isempty(Featuresinfo.bytes)
     if Featuresinfo.bytes>Featuresbytesize
@@ -108,18 +113,18 @@ while(1)
     end
     end
     
-     knownFeaturesinfo=dir('../data/features/knownfeaturesRun.txt');
-    if size(knownFeaturesinfo,1)>0&& ~isempty(knownFeaturesinfo.bytes)
-    if knownFeaturesinfo.bytes>knownFeaturesbytesize
-        knownnewFeature=dlmread('../data/features/featuresRun.txt','',knownFeatureslength,0);
-        knownFeaturesbytesize=knownFeaturesinfo.bytes;
-        delete(knownFeaturesPlot);
-        knownFeaturesPlot=plot(knownnewFeature(:,1),knownnewFeature(:,2),'g*');
-        %Features=[Features;newFeature];
-        %Featureslength=size(Featureslength,1);
-        knownFeatureslength=knownFeatureslength+size(knownnewFeature,1);
-    end
-    end   
+%      knownFeaturesinfo=dir('../data/features/knownfeaturesRun.txt');
+%     if size(knownFeaturesinfo,1)>0&& ~isempty(knownFeaturesinfo.bytes)
+%     if knownFeaturesinfo.bytes>knownFeaturesbytesize
+%         knownnewFeature=dlmread('../data/features/knownfeaturesRun.txt','',knownFeatureslength,0);
+%         knownFeaturesbytesize=knownFeaturesinfo.bytes;
+%         delete(knownFeaturesPlot);
+%         knownFeaturesPlot=plot(knownnewFeature(:,1),knownnewFeature(:,2),'g*');
+%         %Features=[Features;newFeature];
+%         %Featureslength=size(Featureslength,1);
+%         knownFeatureslength=knownFeatureslength+size(knownnewFeature,1);
+%     end
+%     end   
     
     pause(dt)
     if savevideo
@@ -127,6 +132,13 @@ while(1)
     writeVideo(V,currFrame)
     end
 end
-if savevideo
-close(V)
+
+function cleanMeUp(f)
+    % saves data to file (or could save to workspace)
+    fprintf('saving stuff to file\n');
+    if f
+        close(V)
+    end
+end
+
 end
