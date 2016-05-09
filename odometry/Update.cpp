@@ -10,9 +10,9 @@ using namespace std;
 
 Return a matrix composed of following:
 
-   // 1st column: x_hat_min
+   // 1st column: x_hat_plus
 
-   // 2nd column to last column: P_min
+   // 2nd column to last column: P_plus
 
    These are then parsed in the main function		
 	
@@ -24,7 +24,7 @@ Eigen::MatrixXd KalmanFilter::Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd 
 	int stateSize, tempSize;	
 
 	int n_lm = (x_hat_min.size()-3)/2;		// #of landmark in the map
-	int n_z = z_chunk.size()/2;				// #of INFerred relative position measurements
+	int n_z = z_chunk.size()/2;				// #of Infferred relative position measurements in the measurement set
 	
 	double phi;	
 	double Mahal_dist = INF;
@@ -81,30 +81,32 @@ Eigen::MatrixXd KalmanFilter::Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd 
 	{
 
 		stateSize = x_hat_min.size();
-		//Fix those values by z_j or x_hat_min
+		// j-th measurement and int covariance matrix
 		z = z_chunk.block(0,j-1,2,1);
 		R = R_chunk.block(0,j*2-2,2,2);
+		
+		// Forming rotation matix, we need to reset rotational matrix as each update with j-th measurement may update robot pose
 		phi = x_hat_min(2);
 		C << cos(phi), -sin(phi), sin(phi), cos(phi);
 		
-		P_RR = P_min.block(0,0,3,3);
-		H_Li = C.transpose();
+		// These values are fixed within one measurement.
+		G_pR_hat = x_hat_min.head(2);		// Robot pose
+		P_RR = P_min.block(0,0,3,3);		// Robot pose's covariance
+		H_Li = C.transpose();				// Measurement Jacobian H_Li
 		
-		G_pR_hat = x_hat_min.head(2);
-
-		//Get the Mahalanobis distance between z_j and all of landmarks,
-		//Pick the landmark with minimum Mahalanobis distance and save corresponding H/H_R/H_Li
+		
+		// Get the Mahalanobis distance between z_j and all of landmarks,
+		// Pick the landmark with minimum Mahalanobis distance and save corresponding S, H_Li(already saved above), H_R
 		Mahal_dist = INF;
 		Opt_i = 0;
 
 		for(int i=1;i<=n_lm;i++)
 		{
-			//Estimated position of landmark in the map
+			// Estimated position of landmark in the map
 			int Li = i*2 + 1;		//Li = i*2 + 3 -1 -1;
 	
 			G_pLi_hat = x_hat_min.segment(Li,2);
-			
-			R_pLi_hat = C.transpose() * (G_pLi_hat - G_pR_hat);
+			R_pLi_hat = C.transpose() * (G_pLi_hat - G_pR_hat);					//Expected inferred measurement
 			
 			res = z - R_pLi_hat;
 			H_R = Eigen::MatrixXd(2,3);
@@ -114,7 +116,9 @@ Eigen::MatrixXd KalmanFilter::Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd 
 			P_RLi = P_min.block(0,Li,3,2);
         		P_LiR = P_min.block(Li,0,2,3);
         		P_LiLi= P_min.block(Li,Li,2,2);
-        		
+        	
+
+			// For efficiency, Utilizing block operation on calculating residual covariance matrix S
 			S = H_R*P_RR*H_R.transpose() + H_Li*P_LiR*H_R.transpose() + H_R*P_RLi*H_Li.transpose() + H_Li*P_LiLi*H_Li.transpose() + R;
 			tempTrans = 0.5*(S + S.transpose());
 			S = tempTrans;
@@ -123,11 +127,16 @@ Eigen::MatrixXd KalmanFilter::Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd 
 			Eigen::JacobiSVD<Eigen::MatrixXd> svd(S);
 			double cond = svd.singularValues()(0) / svd.singularValues()(svd.singularValues().size()-1);
 			
+			// skip landmark Li if it makes (numerically unstable) residual covariance with measurement z_j
 			if(cond >= 80) continue;
-							
+			
+
+			// Otherwise, go over Mahalanobis distance test	
 			temp_inv_S = S.inverse();
 			temp = res.transpose()*temp_inv_S*res;
             
+			// If mahalanobis distance between z_j and L_i is smaller than optimal mahalanobis distance upto landmark Li-1,
+			// reset optimal mahalanobis distance and save corresponding landmark index,  
 			if(Mahal_dist > temp)
 			{
 				Mahal_dist = temp;
@@ -139,7 +148,7 @@ Eigen::MatrixXd KalmanFilter::Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd 
 		}
 		
 		
-		//new landmark
+		// Adding new landmark
 		if(Opt_i == 0 || Mahal_dist > Gamma_max)
 		{
           std::cout << "New ";
@@ -147,7 +156,7 @@ Eigen::MatrixXd KalmanFilter::Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd 
 
 			// Update state
 			tempVector = x_hat_min;
-			x_hat_min = Eigen::VectorXd(stateSize+2);
+			x_hat_min = Eigen::VectorXd(stateSize+2);		// Resizing state
 			x_hat_min.head(stateSize) = tempVector;
 			x_hat_min.tail(2) = newLand;
             
@@ -160,7 +169,7 @@ Eigen::MatrixXd KalmanFilter::Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd 
 			P_RLi = -P_min.block(0,0, stateSize, 3) * H_R.transpose() * H_Li;
 			tempMatrix = P_min;
 			
-			P_min = Eigen::MatrixXd(stateSize+2,stateSize+2);
+			P_min = Eigen::MatrixXd(stateSize+2,stateSize+2);	// Resizing covariance
 			
 			P_min.block(0,0,stateSize, stateSize) = tempMatrix;
 			P_min.block(0,stateSize, stateSize, 2) = P_RLi;
@@ -168,14 +177,12 @@ Eigen::MatrixXd KalmanFilter::Update(Eigen::VectorXd x_hat_min, Eigen::MatrixXd 
 			P_min.block(stateSize, stateSize, 2,2) = P_LiLi;
 		}
 		
-		
-		
-		//existing landmark
+		// Update with redetected landmark
 		else if(Mahal_dist < Gamma_min)
 		{
-          std::cout << "Old ";
+			std::cout << "Old ";
 			
-			//efficient way(block Operation)
+			// efficient way(block Operation)
 			K = (P_min.block(0,0,stateSize,3)*Opt_H_R.transpose() + P_min.block(0,Opt_i,stateSize,2)*H_Li.transpose()) * Opt_S.inverse();
 			x_hat_min = x_hat_min + K*Opt_res;
 			P_min = P_min - K*Opt_S*K.transpose();
