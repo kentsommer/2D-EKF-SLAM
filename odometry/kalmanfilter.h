@@ -25,6 +25,8 @@ public:
   double Y = 0.0;
   double Phi = 0.0;
   int Num_Landmarks = 0;
+  int Prev_Landmarks = 0;
+  Eigen::VectorXd* landmarks;
   Eigen::MatrixXd* knownLandmarks;
   
   KalmanFilter(ArRobot* robot);

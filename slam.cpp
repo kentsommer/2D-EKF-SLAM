@@ -120,14 +120,21 @@ int main(int argc, char **argv)
   robot.requestEncoderPackets();
   
   //Set dt
-  double dt = 0.001;
-  double loopTime = 0.0;
+  double dt = 0.0;
+  double loopTime = 10.0;
 
   //Initialize the kalman filter
   KalmanFilter* ekf = new KalmanFilter(&robot);
 
   //Enter SLAM loop 
   while (1){
+    
+    //Get the features
+    std::vector<Feature> fvec;
+    double compass;
+    f->getFeatures(&fvec, &compass, ekf->Phi);
+    
+    
     //Propagate the state
     t1 = t2;
     t2 = std::chrono::high_resolution_clock::now();
@@ -135,10 +142,6 @@ int main(int argc, char **argv)
     dt = (double)microseconds / 1000000.0;
     ekf->doPropagation(dt, covFile, knownfeaturesFile);
     
-    //Get the features
-    std::vector<Feature> fvec;
-    double compass;
-    f->getFeatures(&fvec, &compass, ekf->Phi);
     
     //Update using structual compass
     if (compass != f->NO_COMPASS) {
@@ -170,26 +173,24 @@ int main(int argc, char **argv)
       ekf->doUpdate(z_chunk, R_chunk);
       std::cout << ekf->Num_Landmarks << std::endl;
       
-      double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
-      double newY = fx*sin(ekf->Phi) + fy*cos(ekf->Phi);
-      
-      //Save features to file
-      featuresFile << newX + ekf->X << " " << newY + ekf->Y << std::endl;
+//       double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
+//       double newY = fx*sin(ekf->Phi) + fy*cos(ekf->Phi);
+//       
+//       //Save features to file
+//       featuresFile << newX + ekf->X << " " << newY + ekf->Y << std::endl;
     }
     
-    //Save odometry to file
-    odomFile << ekf->X << " " << ekf->Y << std::endl;
-    
-    //If haven't saved laser scan in over a second, save the laser scan
+    //If we haven't saved laser scan in over a 1.5 sec, save the laser scan
     loopTime += dt;
-    if (loopTime > 1.0){      
+    if (loopTime > 1.5){
+      //get scan points as close to position estimate as possible
       sick.lockDevice();
         std::vector<ArSensorReading> *r = sick.getRawReadingsAsVector();
         std::vector<ArSensorReading> readings(*r);
       sick.unlockDevice();
-            
+    
       for (int i=0; i<readings.size(); i++){
-        if (readings[i].getRange() > 10000) continue;
+        if (readings[i].getRange() > 8000) continue;
         
         double fx = readings[i].getLocalX()/1000.0;
         double fy = readings[i].getLocalY()/1000.0;
@@ -201,6 +202,16 @@ int main(int argc, char **argv)
       }
       loopTime = 0.0;
     }
+    
+    
+    //save landmarks
+    for (int i=ekf->Prev_Landmarks; i<ekf->Num_Landmarks; i++){
+      featuresFile << (*(ekf->landmarks))(2*i) << " " << (*(ekf->landmarks))(2*i + 1) << std::endl;;
+    }
+    
+    
+    //Save odometry to file
+    odomFile << ekf->X << " " << ekf->Y << std::endl;
   }
   
   //Wait for robot task loop to end before exiting the program
