@@ -165,7 +165,8 @@ int main(int argc, char **argv)
       double bearing = atan2(fy, fx);
 
       //Compute R
-      R << 0.001, 0, 0, 0.001;
+	// I think sigma_d and sigma_th should be 0.01 and 0.01, so I changed, from R << 0.001, 0, 0, 0.001; ;
+      R << 0.0001, 0, 0, 0.0001;
       G << cos(bearing), -dist * sin(bearing), sin(bearing), dist * cos(bearing);
       R_chunk = G * R * G.transpose();
 
