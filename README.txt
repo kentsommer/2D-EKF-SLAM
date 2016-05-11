@@ -1,6 +1,13 @@
 # CSCI-5552-Project
 Project for Introduction to Sensing and Estimation in Robotics
 
+# Team Body Slam
+* Joel Amert      - 
+* HyeongJoo Hwang - 3879015
+* Henry Grittner  - 4560922
+* Kent Sommer     - 4530009
+
+
 **Purpose**
 * Implements simultaneous localization and mapping in 2D 
 
@@ -18,6 +25,5 @@ Project for Introduction to Sensing and Estimation in Robotics
 
 * To Run:
  * sudo ./build/slam -rp /dev/ttyUSB0 -lp /dev/ttyUSB1
-
 
 

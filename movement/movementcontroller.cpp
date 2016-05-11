@@ -56,7 +56,9 @@ void* move_control(void* args){
     }
     else if(shouldStop(info->sick)){
       //Manage Stopping
-      stop(info->robot);
+      info->robot->lock();
+      info->robot->setVel2(0,0);
+      info->robot->unlock();
     }
     else{
       //Continue forward
