@@ -6,7 +6,6 @@ KalmanFilter::KalmanFilter(ArRobot* robot){
   
   state = new Eigen::VectorXd(3);
   covariance = new Eigen::MatrixXd(3,3);
-  landmarks = new Eigen::VectorXd(2);
   
   (*state) << 0.0, 0.0, 0.0;
   (*covariance) << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
@@ -25,7 +24,7 @@ void KalmanFilter::doPropagation(double dt, std::ofstream& covFile, std::ofstrea
 
   //Correct for that awesome *joke* turning that the robot can't sense
   double v = V/1000.0;
-  double w = RTV + 0.01;
+  double w = RTV;
   double sigma_v = 0.01;
   double sigma_w = 0.04;
   
@@ -83,14 +82,7 @@ void KalmanFilter::doUpdate(Eigen::MatrixXd z_chunk, Eigen::MatrixXd R_chunk) {
 
   (*state) = Set.block(0, 0, size, 1);
   (*covariance) = Set.block(0, 1, size, size);
-  
-  Prev_Landmarks = Num_Landmarks;
-  Num_Landmarks = ((*state).size() - 3) / 2;
-  if (Num_Landmarks != Prev_Landmarks){
-    delete landmarks;
-    landmarks = new Eigen::VectorXd(Num_Landmarks * 2);
-    (*landmarks).head(Num_Landmarks * 2) = (*state).tail(Num_Landmarks * 2);
-  }
+  Num_Landmarks = ((*state).size()-3)/2;
   
   X = (*state)(0);
   Y = (*state)(1);
@@ -136,13 +128,4 @@ void KalmanFilter::doUpdateCompass(double z, double R){
   Y = (*state)(1);
   Phi = (*state)(2);
 }
-
-
-
-
-
-
-
-
-
 

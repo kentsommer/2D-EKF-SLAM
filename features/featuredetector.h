@@ -32,13 +32,13 @@ public:
   double CORNER_THETA = 22.0 * 3.141592654/180.0;   //min angle between segments making a corner
   static const int CORNER_DIST = 90000; //squared distance between segment and feature (mm)
   
-  double COMPASS_THRESH = 10 * 3.141592654/180.0;
+  double COMPASS_THRESH = 10 * 3.141592654/180.0;   //maximum angle between parallel lines
   
   FeatureDetector(ArSick* sick);
   ~FeatureDetector();
   
+  //get the features for the most recent scan
   int getFeatures(std::vector<Feature> *featVec, double* structCompass, double curPhi);
-  void start();
   
 private:
   struct lineSegment{

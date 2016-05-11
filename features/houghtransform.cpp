@@ -1,6 +1,7 @@
 #include "houghtransform.h"
 
 
+//Constructor
 HoughTransform::HoughTransform(){
   this->houghGrid = new unsigned char[THETA_SIZE * RADIUS_SIZE]();
   D_THETA = 3.141592654 / THETA_SIZE;
@@ -17,7 +18,7 @@ HoughTransform::HoughTransform(){
 }
 
 
-
+//destructor
 HoughTransform::~HoughTransform(){
   delete[] this->houghGrid;
   delete[] this->COS_ARRAY;
@@ -25,7 +26,7 @@ HoughTransform::~HoughTransform(){
 }
 
 
-
+//clear the hough accumulator array
 void HoughTransform::clearHoughGrid(){
   for (int i=0; i<THETA_SIZE; i++){
     for (int j=0; j<RADIUS_SIZE; j++){
@@ -35,8 +36,9 @@ void HoughTransform::clearHoughGrid(){
 }
 
 
-
+//get lines out of the hough transform
 int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector<struct houghLine> *lines){
+  //perform hough transform
   this->performHoughTransform(readings);
 //   this->sendHoughToImage("/home/owner/Pictures/hough.pgm");
   
@@ -234,7 +236,7 @@ int HoughTransform::getLines(std::vector<ArSensorReading> *readings, std::vector
 }
 
 
-
+//perform a hough transform on the given scan points
 void HoughTransform::performHoughTransform(std::vector<ArSensorReading> *readings){
   int radius;
   double x, y;
@@ -254,7 +256,7 @@ void HoughTransform::performHoughTransform(std::vector<ArSensorReading> *reading
 }
 
 
-
+//pull the highest NUM_PEAKS points out of the hough accumulator array
 void HoughTransform::getPeaks(int count, int peaks[]){
   int mindex = 0;
   int curVal;
@@ -278,7 +280,7 @@ void HoughTransform::getPeaks(int count, int peaks[]){
 }
 
 
-
+//send hough accumulator array to image for debugging
 void HoughTransform::sendHoughToImage(char* filename){
   FILE* pgmFile = std::fopen(filename, "wb");
   if (!pgmFile) {
@@ -295,13 +297,4 @@ void HoughTransform::sendHoughToImage(char* filename){
 //   std::fflush(ppmFile);
   std::fclose(pgmFile);
 }
-
-
-
-
-
-
-
-
-
 

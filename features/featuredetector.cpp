@@ -1,115 +1,45 @@
 #include "featuredetector.h"
 
-
-
-void* feature_save(void* args){
-  ArSick* sick = (ArSick*)args;
-  FeatureDetector* f = new FeatureDetector(sick);
-  
-  char const *filename = "./features.txt";
-  char const *filename2 = "./laserscans.txt";
-  std::ofstream outFeat (filename, std::ofstream::out);
-  std::ofstream outLas (filename2, std::ofstream::out);
-  
-  int count = 5;
-  struct timeval tp;
-  long milliseconds;
-  
-  while(1){
-    std::vector<Feature> fvec;
-    gettimeofday(&tp, NULL);
-    //TIMER
-/*    std::clock_t    start;
-    start = std::clock();*/
-
-
-    f->getFeatures(&fvec, nullptr, 0);
-      //TIMER
-    //std::cout << "Time for FEATURES: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-
-    
-    if (fvec.size() > 0) {
-      milliseconds = tp.tv_sec*1000 + tp.tv_usec / 1000;
-      outFeat << milliseconds << " ";
-
-      for (int i=0; i<fvec.size(); i++){
-        outFeat << fvec[i].x << " " << fvec[i].y << " ";
-      }
-      outFeat << std::endl;
-    }
-    
-    if (count++ == 5){
-      count = 1;
-      sick->lockDevice();
-        std::vector<ArSensorReading> *r = sick->getRawReadingsAsVector();
-        std::vector<ArSensorReading> readings(*r);
-      sick->unlockDevice();
-      
-      outLas << milliseconds << " ";
-      
-      for (int i=0; i<readings.size(); i++){
-        outLas << readings[i].getLocalX() << " ";
-        outLas << readings[i].getLocalY() << " ";
-      }
-      
-      outLas << std::endl;
-    }
-    
-    usleep(1000000);
-  }
-
-  delete f;
-  pthread_exit(nullptr);
-}
-
-
-void FeatureDetector::start(){
-  pthread_t thread;
-  
-  int tc = pthread_create(&thread, nullptr, feature_save, (void*)sick);
-  if (tc) std::cout << "Thread creation Error\n";
-}
-
-
-
-
-
-
-
-
-
+//constructor
 FeatureDetector::FeatureDetector(ArSick* sick){
   this->sick = sick;
   this->hough = new HoughTransform();
 }
 
-
+//destructor
 FeatureDetector::~FeatureDetector(){
   delete this->hough;
 }
 
 
+//main getFeatures function. Returns number of features found
 int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCompass, double curPhi){
+  //get current scan points
   sick->lockDevice();
     std::vector<ArSensorReading> *r = sick->getRawReadingsAsVector();
     std::vector<ArSensorReading> readings(*r);
     ArTime curTime = sick->getLastReadingTime();
   sick->unlockDevice();
   
+  //make sure we have readings in the scan
   if (readings.size() == 0){
     (*structCompass) = NO_COMPASS;
     return 0;
   }
+  
+  //make sure this is a new scan
   if (curTime.isAt(Last_Time)){
     (*structCompass) = NO_COMPASS;
     return 0;
   }
   Last_Time = curTime;
   
+  //get lines in scan from hough transform
   std::vector<struct houghLine> houghLines;
   this->hough->getLines(&readings, &houghLines);
   this->hough->clearHoughGrid();
   
+  //fit points to lines to get line segments
   std::vector<struct lineSegment> lineSegments;
   this->fitLineSegments(&readings, &houghLines, &lineSegments);
   
@@ -125,7 +55,7 @@ int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCo
 //   }
 //   std::cout << std::endl;
   
-//   std::cout << "getting features...\n";
+  //extract corners from line segments
   int numf = this->extractCorners(featVec, &lineSegments);
   
 //   for (int i=0; i<featVec->size(); i++){
@@ -134,6 +64,7 @@ int FeatureDetector::getFeatures(std::vector<Feature> *featVec, double* structCo
 //     std::cout << (*featVec)[i].y << std::endl;;
 //   }
   
+  //get structural compass measurement
   (*structCompass) = getStructCompass(&houghLines, curPhi);
   return numf;
 }
@@ -152,19 +83,18 @@ int FeatureDetector::fitLineSegments(std::vector<ArSensorReading> *readings,
   float cos_array[lineSize];
   std::vector<struct lineSegment*> initialSegs;
   
+  //initialize arrays
   for (int i=0; i<lineSize; i++){
     theta = (*lines)[i].theta;
     sin_array[i] = sin(theta);
-    cos_array[i] = cos(theta);
-    
-//     std::cout << "Line: " << theta << " " << (*lines)[i].radius << std::endl;
-    
+    cos_array[i] = cos(theta);    
     initialSegs.push_back(nullptr);
   }
   
   
   struct lineSegment* mergeSeg;
   
+  //loop through all points in scan and add to line segments
   for (int r=0; r<readings->size(); r++){
     if ((*readings)[r].getRange() > MAX_DIST) continue;
     
@@ -184,17 +114,14 @@ int FeatureDetector::fitLineSegments(std::vector<ArSensorReading> *readings,
         mindex = l;
       }
     }
-    
-//     std::cout << " " << minDiff << " " << (*lines)[mindex].theta << " " << (*lines)[mindex].radius << std::endl;
-    
+        
     //check if point is close enough to be on line at all
     if (minDiff > POINT_DIST) continue;
-    
     
     //merge point with line segments
     mergeSeg = initialSegs[mindex];
     
-    //horizontalish line
+    //horizontalish line merging
     if (fabs(sin_array[mindex]) > fabs(cos_array[mindex])){
       while (mergeSeg != nullptr){
         //point is in middle of line segment
@@ -223,7 +150,7 @@ int FeatureDetector::fitLineSegments(std::vector<ArSensorReading> *readings,
         }
       }
     
-    //verticalish line
+    //verticalish line merging
     } else {
       while (mergeSeg != nullptr){
         //point is in middle of line segment
@@ -293,13 +220,14 @@ int FeatureDetector::fitLineSegments(std::vector<ArSensorReading> *readings,
 }
 
 
-
+//pull corner features from line segments
 int FeatureDetector::extractCorners(std::vector<Feature> *featVec, std::vector<struct lineSegment> *segments){
   int numSeg = segments->size();
   
   float sin_array[numSeg];
   float cos_array[numSeg];
   
+  //initialize arrays
   double theta;
   for (int i=0; i<numSeg; i++){
     theta = (*segments)[i].theta;
@@ -326,10 +254,12 @@ int FeatureDetector::extractCorners(std::vector<Feature> *featVec, std::vector<s
       
       if (thetaDiff < CORNER_THETA) continue;
       
+      //find intersection point of line segments
       det = cos_array[i]*sin_array[j] - sin_array[i]*cos_array[j];
       x = (seg1.radius * sin_array[j] - seg2.radius * sin_array[i]) / det;
       y = (seg2.radius * cos_array[i] - seg1.radius * cos_array[j]) / det;
       
+      //get distance between line segments and intersection point
       dx = seg1.startX - x;
       dy = seg1.startY - y;
       start1 = (dx*dx + dy*dy) < CORNER_DIST;
@@ -343,6 +273,7 @@ int FeatureDetector::extractCorners(std::vector<Feature> *featVec, std::vector<s
       dy = seg2.endY - y;
       end2 = (dx*dx + dy*dy) < CORNER_DIST;
       
+      //if segments are close enough to intersection, save intersectino as new corner
       if ((start1 || end1) && (start2 || end2) && ((x*x + y*y) > MIN_DIST)){
         Feature f;
         f.x = x;
@@ -370,6 +301,7 @@ double FeatureDetector::getStructCompass(std::vector<struct houghLine> *lines, d
     
     bool merge = false;
     
+    //check to see if we can merge line with existing group
     for (int j=0; j<groups.size(); j++){
       double mergeTheta = groups[j].theta / groups[j].weight;
       double thetaDiff = fabs(curTheta - mergeTheta);
@@ -381,7 +313,8 @@ double FeatureDetector::getStructCompass(std::vector<struct houghLine> *lines, d
       }
       
     }
-    
+
+    //if we can't merge, make a new compass group
     if (!merge){
       struct compassgroup g;
       g.theta = curTheta*curWeight;

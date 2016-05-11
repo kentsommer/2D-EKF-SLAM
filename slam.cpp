@@ -129,18 +129,18 @@ int main(int argc, char **argv)
   //Enter SLAM loop 
   while (1){
     
-    //Get the features
-    std::vector<Feature> fvec;
-    double compass;
-    f->getFeatures(&fvec, &compass, ekf->Phi);
-    
-    
     //Propagate the state
     t1 = t2;
     t2 = std::chrono::high_resolution_clock::now();
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     dt = (double)microseconds / 1000000.0;
     ekf->doPropagation(dt, covFile, knownfeaturesFile);
+    
+    
+    //Get the features
+    std::vector<Feature> fvec;
+    double compass;
+    f->getFeatures(&fvec, &compass, ekf->Phi);
     
     
     //Update using structual compass
@@ -165,20 +165,21 @@ int main(int argc, char **argv)
       double bearing = atan2(fy, fx);
 
       //Compute R
-	// I think sigma_d and sigma_th should be 0.01 and 0.01, so I changed, from R << 0.001, 0, 0, 0.001; ;
-      R << 0.0001, 0, 0, 0.0001;
+      R << 0.001, 0, 0, 0.001;
       G << cos(bearing), -dist * sin(bearing), sin(bearing), dist * cos(bearing);
       R_chunk = G * R * G.transpose();
 
+      //perform an update
       std::cout << "Update: ";
       ekf->doUpdate(z_chunk, R_chunk);
       std::cout << ekf->Num_Landmarks << std::endl;
       
-//       double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
-//       double newY = fx*sin(ekf->Phi) + fy*cos(ekf->Phi);
-//       
-//       //Save features to file
-//       featuresFile << newX + ekf->X << " " << newY + ekf->Y << std::endl;
+      //calculate global position of features
+      double newX = fx*cos(ekf->Phi) - fy*sin(ekf->Phi);
+      double newY = fx*sin(ekf->Phi) + fy*cos(ekf->Phi);
+      
+      //Save features to file
+      featuresFile << newX + ekf->X << " " << newY + ekf->Y << std::endl;
     }
     
     //If we haven't saved laser scan in over a 1.5 sec, save the laser scan
@@ -191,7 +192,7 @@ int main(int argc, char **argv)
       sick.unlockDevice();
     
       for (int i=0; i<readings.size(); i++){
-        if (readings[i].getRange() > 8000) continue;
+        if (readings[i].getRange() > 7000) continue;
         
         double fx = readings[i].getLocalX()/1000.0;
         double fy = readings[i].getLocalY()/1000.0;
@@ -202,12 +203,6 @@ int main(int argc, char **argv)
         scanFile << newX + ekf->X << " " << newY + ekf->Y << std::endl;
       }
       loopTime = 0.0;
-    }
-    
-    
-    //save landmarks
-    for (int i=ekf->Prev_Landmarks; i<ekf->Num_Landmarks; i++){
-      featuresFile << (*(ekf->landmarks))(2*i) << " " << (*(ekf->landmarks))(2*i + 1) << std::endl;;
     }
     
     
