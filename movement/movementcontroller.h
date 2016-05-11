@@ -18,11 +18,6 @@ struct robot_info{
 };
 
 void* move_control(void* args);
-void move_forward(ArRobot* robot);
-void move_backward(ArRobot* robot);
-void turn_left(ArRobot* robot);
-void turn_right(ArRobot* robot);
-void stop(ArRobot* robot);
 bool shouldStop(ArSick* sick);
 bool canAlignRight(ArSick* sick);
 bool canAlignLeft(ArSick* sick);

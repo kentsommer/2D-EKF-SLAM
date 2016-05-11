@@ -76,38 +76,6 @@ void* move_control(void* args){
 }
 
 
-
-void move_forward(ArRobot* robot){
-  robot->lock();
-    robot->setVel2(FORWARD_VEL, FORWARD_VEL);
-  robot->unlock();
-}
-
-void move_backward(ArRobot* robot){
-  robot->lock();
-    robot->setVel2(-FORWARD_VEL, -FORWARD_VEL);
-  robot->unlock();
-}
-
-void turn_left(ArRobot* robot){
-  robot->lock();
-    robot->setVel2(-TURN_VEL, TURN_VEL);
-  robot->unlock();
-}
-
-void turn_right(ArRobot* robot){  
-  robot->lock();
-    robot->setVel2(TURN_VEL, -TURN_VEL);
-  robot->unlock();
-}
-
-void stop(ArRobot* robot){  
-  robot->lock();
-    robot->setVel2(0, 0);
-  robot->unlock();
-}
-
-
 bool shouldStop(ArSick* sick){
   // Average distance in front left and front right window of scanner
     // if distance < thresh -> return true
