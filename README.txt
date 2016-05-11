@@ -2,7 +2,7 @@
 Project for Introduction to Sensing and Estimation in Robotics
 
 # Team Body Slam
-* Joel Amert      - 
+* Joel Amert      - 4009813
 * HyeongJoo Hwang - 3879015
 * Henry Grittner  - 4560922
 * Kent Sommer     - 4530009
@@ -24,6 +24,10 @@ Project for Introduction to Sensing and Estimation in Robotics
  * make clean
 
 * To Run:
- * sudo ./build/slam -rp /dev/ttyUSB0 -lp /dev/ttyUSB1
+ * Main Program:
+  * sudo ./build/slam -rp /dev/ttyUSB0 -lp /dev/ttyUSB1
+ * Real Time Plotting:
+  * Open matlab and run "RealTimePlotting.m" after starting the main program
+
 
 
