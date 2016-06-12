@@ -66,15 +66,6 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  ArKeyHandler keyHandler;
-  Aria::setKeyHandler(&keyHandler);
-  robot.attachKeyHandler(&keyHandler);
-
-  puts("This program performs SLAM");
-  
-  ArSonarDevice sonar;
-  robot.addRangeDevice(&sonar);
-  robot.addRangeDevice(&sick);
 
   if (!connector.connectRobot(&robot))
   {
